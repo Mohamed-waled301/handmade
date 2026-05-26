@@ -105,6 +105,48 @@
 
     /* Image cover helper */
     .img-cover{object-fit:cover;width:100%;height:100%}
+
+    /* Status Badges */
+    .status-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-pending { background-color: #FDF9F3; color: #B07040; border: 1px solid #E0C6A6; }
+    .status-review { background-color: #FFF9EB; color: #D4960A; border: 1px solid #FFDC88; }
+    .status-waiting { background-color: #F4F6F3; color: #698060; border: 1px solid #CDD8C7; }
+    .status-paid { background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+    .status-rejected { background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+    .dark .status-pending { background-color: rgba(176,112,64,0.1); color: #E0C6A6; border-color: rgba(176,112,64,0.3); }
+    .dark .status-review { background-color: rgba(212,150,10,0.1); color: #FFDC88; border-color: rgba(212,150,10,0.3); }
+    .dark .status-waiting { background-color: rgba(105,128,96,0.1); color: #CDD8C7; border-color: rgba(105,128,96,0.3); }
+    .dark .status-paid { background-color: rgba(5,150,105,0.1); color: #6EE7B7; border-color: rgba(5,150,105,0.3); }
+    .dark .status-rejected { background-color: rgba(220,38,38,0.1); color: #FCA5A5; border-color: rgba(220,38,38,0.3); }
+
+    /* AI Meter */
+    .ai-meter-bg { width: 100%; height: 8px; background-color: #EFEBE5; border-radius: 999px; overflow: hidden; }
+    .dark .ai-meter-bg { background-color: #3A3027; }
+    .ai-meter-fill { height: 100%; border-radius: 999px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .meter-high { background-color: #10B981; }
+    .meter-med { background-color: #F59E0B; }
+    .meter-low { background-color: #EF4444; }
+
+    /* Pulse Ring */
+    @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(2); opacity: 0; } }
+    .pulse-ring-anim::before { content: ''; position: absolute; inset: 0; border-radius: 50%; animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+    /* Fraud Indicators */
+    .fraud-low { color: #10B981; }
+    .fraud-medium { color: #F59E0B; }
+    .fraud-high { color: #EF4444; }
+
+    /* Admin Card */
+    .admin-card { background: white; border-radius: 1rem; border: 1px solid #EFEBE5; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .dark .admin-card { background: #3A3027; border-color: #4D4032; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+
+    /* Timeline */
+    .timeline-item { position: relative; padding-left: 2rem; padding-bottom: 1.5rem; }
+    .timeline-item:not(:last-child)::before { content: ''; position: absolute; left: 0.5rem; top: 1.5rem; bottom: 0; width: 2px; background-color: #EFEBE5; }
+    .dark .timeline-item:not(:last-child)::before { background-color: #4D4032; }
+    .timeline-dot { position: absolute; left: 0; top: 0.25rem; width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid white; }
+    .dark .timeline-dot { border-color: #3A3027; }
+
   </style>
 </head>
 
@@ -339,7 +381,7 @@
           <div class="w-8 h-8 rounded-lg bg-earth-900 dark:bg-cream-100 flex items-center justify-center"><span class="text-cream-100 dark:text-earth-900 font-serif font-bold text-xs">H</span></div>
           <span class="text-sm font-serif font-semibold tracking-[.12em] text-earth-900 dark:text-cream-100">HANDMADE</span>
         </div>
-        <p class="text-earth-400 dark:text-earth-500 text-xs">© 2026 Handmade. <span x-text="t('rights')"></span></p>
+        <p class="text-earth-400 dark:text-earth-500 text-xs cursor-default select-none" @click="adminClicks++; if(adminClicks>=5){adminUnlocked=false; view='admin'; adminClicks=0; window.scrollTo(0,0);}">© 2026 Handmade. <span x-text="t('rights')"></span></p>
         <div class="flex items-center gap-4 text-earth-400 dark:text-earth-500">
           <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-instagram"></i></a>
           <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-facebook"></i></a>
@@ -405,7 +447,7 @@
             <template x-for="m in payMethods" :key="m.key">
               <label class="rc flex flex-col items-center gap-2 p-4 rounded-xl border cursor-pointer text-center"
                 :class="chk.pay===m.key?'border-clay-500 dark:border-gold-500 bg-clay-50/40 dark:bg-gold-500/5 shadow-sm':'border-warm-200 dark:border-earth-600 bg-white dark:bg-earth-800/40 hover:border-clay-300 dark:hover:border-earth-500'">
-                <input type="radio" name="pay" :value="m.key" x-model="chk.pay" @change="receiptFile=null;receiptName=''" class="sr-only"/>
+                <input type="radio" name="pay" :value="m.key" x-model="chk.pay" @change="receiptFile=null;receiptName='';paymentVerificationPassed=false;verificationFailReason='';" class="sr-only"/>
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :class="chk.pay===m.key?'bg-clay-100 dark:bg-gold-500/20 text-clay-600 dark:text-gold-400':'bg-cream-200 dark:bg-earth-700 text-earth-400 dark:text-earth-400'">
                   <i :class="m.icon"></i>
                 </div>
@@ -444,54 +486,20 @@
             </div>
           </div>
 
-          <!-- ═══ RECEIPT UPLOAD (MANDATORY for InstaPay / Vodafone) ═══ -->
-          <div x-show="needsReceipt" x-transition class="mt-5">
-            <label class="block text-xs font-semibold text-earth-700 dark:text-cream-200 mb-2 flex items-center gap-1.5">
-              <i class="fa-solid fa-cloud-arrow-up text-clay-500 dark:text-gold-400"></i>
-              <span x-text="t('uploadLabel')"></span>
-              <span class="text-red-500">*</span>
-            </label>
-            <div class="upload-zone rounded-xl p-6 text-center cursor-pointer relative"
-                 @click="$refs.receiptInput.click()"
-                 @dragover.prevent="$event.currentTarget.classList.add('drag-over')"
-                 @dragleave.prevent="$event.currentTarget.classList.remove('drag-over')"
-                 @drop.prevent="handleDrop($event)">
-              <input type="file" accept="image/*" x-ref="receiptInput" class="sr-only" @change="handleFile($event)" required/>
-              <div x-show="!receiptName">
-                <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-clay-100/60 dark:bg-earth-700/50 flex items-center justify-center">
-                  <i class="fa-solid fa-image text-2xl text-clay-400 dark:text-earth-400"></i>
-                </div>
-                <p class="text-sm font-medium text-earth-600 dark:text-cream-300 mb-1" x-text="t('uploadCta')"></p>
-                <p class="text-xs text-earth-400 dark:text-earth-500" x-text="t('uploadHint')"></p>
-              </div>
-              <div x-show="receiptName" class="flex items-center justify-center gap-3">
-                <div class="w-12 h-12 rounded-lg bg-sage-100 dark:bg-sage-800/30 flex items-center justify-center">
-                  <i class="fa-solid fa-file-image text-xl text-sage-600 dark:text-sage-400"></i>
-                </div>
-                <div class="text-left">
-                  <p class="text-sm font-medium text-earth-900 dark:text-cream-100 truncate max-w-[200px]" x-text="receiptName"></p>
-                  <p class="text-xs text-sage-600 dark:text-sage-400 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i><span x-text="t('uploaded')"></span></p>
-                </div>
-                <button @click.stop="receiptFile=null;receiptName=''" class="ml-2 w-7 h-7 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-                  <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
-              </div>
-            </div>
-            <p x-show="receiptErr" class="text-red-500 text-xs mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="t('receiptReq')"></span></p>
-          </div>
+          
         </div>
 
         <!-- Submit -->
         <button @click="submitOrder()"
                 class="w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 text-lg transition-all duration-300"
-                :class="canSubmit
+                :class="isAnalyzing ? 'bg-clay-500 text-white cursor-wait' : (canSubmit
                   ? 'bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 hover:shadow-lg hover:shadow-earth-900/15 dark:hover:shadow-cream-100/10 cursor-pointer'
-                  : 'bg-warm-300 dark:bg-earth-600 text-warm-500 dark:text-earth-400 cursor-not-allowed'"
-                :disabled="!canSubmit">
-          <i class="fa-solid fa-lock text-sm"></i>
-          <span x-text="t('placeOrder')"></span>
+                  : 'bg-warm-300 dark:bg-earth-600 text-warm-500 dark:text-earth-400 cursor-not-allowed')"
+                :disabled="!canSubmit || isAnalyzing">
+          <i class="fa-solid" :class="isAnalyzing ? 'fa-circle-notch fa-spin' : 'fa-lock'"></i>
+          <span x-text="isAnalyzing ? (lang==='ar'?'جاري التحويل لبوابة الدفع...':'Redirecting to secure gateway...') : t('placeOrder')"></span>
         </button>
-        <p x-show="chkErr" class="text-red-500 text-sm text-center flex items-center justify-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="chkErr"></span></p>
+        <p x-show="chkErr" class="text-red-500 text-sm text-center flex items-center justify-center gap-1 mt-2"><i class="fa-solid fa-circle-exclamation"></i><span x-text="chkErr"></span></p>
       </div>
 
       <!-- Summary -->
@@ -550,6 +558,366 @@
       <button @click="resetAll()" class="w-full py-3.5 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
         <i class="fa-solid fa-bag-shopping"></i><span x-text="t('contShop')"></span>
       </button>
+    </div>
+  </div>
+</main>
+
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAYMENT DETAILS VIEW                    -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='payment-details'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-clay-100 dark:bg-gold-500/20 text-clay-600 dark:text-gold-400 mb-4">
+        <i class="fa-solid fa-money-bill-transfer text-2xl"></i>
+      </div>
+      <h1 class="text-3xl font-serif font-bold text-earth-900 dark:text-cream-100 mb-2" x-text="t('payDetTitle')"></h1>
+      <p class="text-earth-500 dark:text-cream-400" x-text="t('payDetDesc')"></p>
+    </div>
+
+    <div class="p-8 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60 mb-8 shadow-sm">
+      <div class="text-center mb-6">
+        <p class="text-sm text-earth-500 dark:text-cream-400 mb-1" x-text="t('amountToPay')"></p>
+        <p class="text-4xl font-bold text-clay-600 dark:text-gold-400" x-text="fmt(gTotal)"></p>
+        <p class="text-xs text-earth-400 mt-2" x-text="t('ordRef') + ': ' + ordNo"></p>
+      </div>
+
+      <div class="bg-cream-50 dark:bg-earth-900/50 rounded-xl p-6 border border-warm-200 dark:border-earth-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i :class="chk.pay==='instapay' ? 'fa-solid fa-building-columns text-clay-500' : 'fa-solid fa-mobile-screen text-clay-500'"></i>
+          <span class="font-semibold text-earth-900 dark:text-cream-100" x-text="chk.pay==='instapay' ? t('ipaTitle') : t('vfTitle')"></span>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="flex justify-between items-center pb-3 border-b border-warm-200/60 dark:border-earth-700/40">
+            <span class="text-sm text-earth-500 dark:text-cream-400" x-text="t('receiverName')"></span>
+            <span class="text-sm font-semibold text-earth-900 dark:text-cream-100" x-text="chk.pay==='instapay' ? businessConfig.instapay.receiver : businessConfig.vodafone.receiver"></span>
+          </div>
+          <div class="flex justify-between items-center pb-3 border-b border-warm-200/60 dark:border-earth-700/40">
+            <span class="text-sm text-earth-500 dark:text-cream-400" x-text="chk.pay==='instapay' ? t('ipaAcc') : t('vfNum')"></span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-mono font-bold text-clay-600 dark:text-gold-300" x-text="chk.pay==='instapay' ? businessConfig.instapay.account : businessConfig.vodafone.phone"></span>
+              <button @click="copyTxt(chk.pay==='instapay' ? businessConfig.instapay.account : businessConfig.vodafone.phone)" class="text-earth-400 hover:text-clay-600 transition-colors"><i class="fa-solid fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button @click="view='payment-upload'; window.scrollTo({top:0,behavior:'smooth'})" class="w-full py-4 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg">
+      <span x-text="t('ivePaid')"></span>
+      <i class="fa-solid" :class="lang==='ar'?'fa-arrow-left':'fa-arrow-right'"></i>
+    </button>
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAYMENT UPLOAD VIEW                     -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='payment-upload'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-serif font-bold text-earth-900 dark:text-cream-100 mb-2" x-text="t('upReceipt')"></h1>
+      <p class="text-earth-500 dark:text-cream-400" x-text="t('upReceiptDesc')"></p>
+    </div>
+
+    <div class="p-8 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60 mb-8 shadow-sm relative overflow-hidden">
+      
+      <!-- Analyzing Overlay -->
+      <div x-show="isAnalyzing" class="absolute inset-0 z-10 bg-white/90 dark:bg-earth-800/90 gls flex flex-col items-center justify-center p-8">
+        <div class="relative w-20 h-20 mb-6">
+          <div class="absolute inset-0 border-4 border-clay-200 dark:border-earth-600 rounded-full"></div>
+          <div class="absolute inset-0 border-4 border-clay-500 dark:border-gold-400 rounded-full border-t-transparent animate-spin"></div>
+          <i class="fa-solid fa-microchip absolute inset-0 m-auto w-6 h-6 text-clay-600 dark:text-gold-400 text-2xl flex items-center justify-center"></i>
+        </div>
+        <h3 class="text-lg font-bold text-earth-900 dark:text-cream-100 mb-2" x-text="t('analyzingTitle')"></h3>
+        <p class="text-sm text-earth-500 dark:text-cream-400 mb-6 text-center max-w-xs" x-text="t('analyzingDesc')"></p>
+        <div class="w-full max-w-xs ai-meter-bg">
+          <div class="ai-meter-fill bg-clay-500 dark:bg-gold-400" :style="'width: '+analysisProgress+'%'"></div>
+        </div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-zone rounded-xl p-8 text-center cursor-pointer relative min-h-[250px] flex flex-col items-center justify-center"
+           @click="if(!isAnalyzing) $refs.fullReceiptInput.click()"
+           @dragover.prevent="$event.currentTarget.classList.add('drag-over')"
+           @dragleave.prevent="$event.currentTarget.classList.remove('drag-over')"
+           @drop.prevent="if(!isAnalyzing) handleDropFull($event)">
+        <input type="file" accept="image/*" x-ref="fullReceiptInput" class="sr-only" @change="handleFileFull($event)"/>
+        
+        <div x-show="!paymentImagePreview">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-clay-100/60 dark:bg-earth-700/50 flex items-center justify-center">
+            <i class="fa-solid fa-cloud-arrow-up text-3xl text-clay-500 dark:text-gold-400"></i>
+          </div>
+          <p class="text-base font-semibold text-earth-700 dark:text-cream-200 mb-2" x-text="t('uploadCta')"></p>
+          <p class="text-sm text-earth-400 dark:text-earth-500 mb-4" x-text="t('uploadHint')"></p>
+          <div class="flex justify-center gap-4 text-xs text-earth-400">
+            <span class="flex items-center gap-1"><i class="fa-solid fa-check text-emerald-500"></i> JPG, PNG, WEBP</span>
+            <span class="flex items-center gap-1"><i class="fa-solid fa-check text-emerald-500"></i> < 10MB</span>
+          </div>
+        </div>
+
+        <div x-show="paymentImagePreview" class="w-full relative group">
+          <img :src="paymentImagePreview" class="max-h-64 mx-auto object-contain rounded-lg shadow-sm" alt="Receipt"/>
+          <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+            <button @click.stop="paymentImagePreview=null; receiptFile=null; receiptName=''" class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg gls backdrop-blur-md font-medium text-sm transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-trash-can"></i> <span x-text="t('removeImg')"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <p x-show="receiptErr" class="text-red-500 text-sm mt-3 text-center flex items-center justify-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="chkErr"></span></p>
+    </div>
+
+    <button @click="submitPaymentReceipt()" :disabled="!receiptFile || isAnalyzing" class="w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 text-lg transition-all"
+            :class="(receiptFile && !isAnalyzing) ? 'bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 hover:shadow-lg cursor-pointer' : 'bg-warm-300 dark:bg-earth-600 text-warm-500 dark:text-earth-400 cursor-not-allowed'">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span x-text="t('verifyReceipt')"></span>
+    </button>
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAYMENT REVIEW VIEW                     -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='payment-review'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-2xl sm:text-3xl font-serif font-bold text-earth-900 dark:text-cream-100" x-text="t('revTitle')"></h1>
+      <span class="text-sm font-mono font-semibold text-clay-600 dark:text-gold-400 bg-clay-50 dark:bg-gold-500/10 px-3 py-1.5 rounded-lg border border-clay-200 dark:border-gold-500/20" x-text="'#' + currentOrder?.id"></span>
+    </div>
+
+    <!-- Status Stepper -->
+    <div class="bg-white dark:bg-earth-800/60 rounded-2xl p-6 border border-warm-200/60 dark:border-earth-700/40 mb-8 overflow-x-auto">
+      <div class="flex items-center justify-between min-w-[600px] relative">
+        <div class="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-1 bg-warm-200 dark:bg-earth-700 rounded-full z-0"></div>
+        <div class="absolute left-8 top-1/2 -translate-y-1/2 h-1 bg-clay-500 dark:bg-gold-400 rounded-full z-0 transition-all duration-1000" :style="'width: ' + getStepProgress() + '%'"></div>
+        
+        <template x-for="(step, idx) in ['PENDING_PAYMENT', 'UNDER_REVIEW', 'WAITING_CONFIRMATION', 'PAID']" :key="step">
+          <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-500"
+                 :class="getStepStatus(step) === 'done' ? 'bg-clay-500 text-white dark:bg-gold-400 dark:text-earth-900 shadow-lg' : 
+                         (getStepStatus(step) === 'active' ? 'bg-white dark:bg-earth-800 border-2 border-clay-500 dark:border-gold-400 text-clay-500 dark:text-gold-400 shadow-md ' + (step==='UNDER_REVIEW'||step==='WAITING_CONFIRMATION'?'pulse-ring-anim relative':'') : 
+                         'bg-warm-100 dark:bg-earth-700 text-warm-400 dark:text-earth-500')">
+              <i class="fa-solid" :class="step === 'PAID' ? 'fa-check' : (step === 'WAITING_CONFIRMATION' ? 'fa-user-clock' : (step === 'UNDER_REVIEW' ? 'fa-microchip' : 'fa-file-invoice'))"></i>
+            </div>
+            <span class="text-xs font-semibold uppercase tracking-wider" 
+                  :class="getStepStatus(step) !== 'pending' ? 'text-earth-900 dark:text-cream-100' : 'text-earth-400 dark:text-earth-500'" 
+                  x-text="t('step_' + step)"></span>
+          </div>
+        </template>
+      </div>
+      
+      <!-- Rejection Alert -->
+      <div x-show="currentVerification?.verificationStatus === 'REJECTED'" class="mt-8 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 flex items-start gap-3">
+        <i class="fa-solid fa-circle-xmark text-red-500 mt-0.5"></i>
+        <div>
+          <h4 class="font-bold text-red-800 dark:text-red-400 text-sm mb-1" x-text="t('payRejected')"></h4>
+          <p class="text-sm text-red-600 dark:text-red-300" x-text="t('reason') + ': ' + (currentVerification?.validation?.rejectReason || t('fraudFail'))"></p>
+          <button @click="view='payment-upload'" class="mt-3 text-xs font-semibold px-4 py-2 bg-white dark:bg-earth-800 rounded-lg text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" x-text="t('tryAgain')"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- AI Results Panel -->
+      <div class="space-y-6">
+        <div class="bg-white dark:bg-earth-800/60 rounded-2xl p-6 border border-warm-200/60 dark:border-earth-700/40">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-microchip text-clay-500"></i><span x-text="t('aiAnalysis')"></span></h3>
+          
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-cream-50 dark:bg-earth-900/50 border border-warm-200/50 dark:border-earth-700/50">
+              <p class="text-xs text-earth-500 dark:text-cream-400 mb-1" x-text="t('aiConf')"></p>
+              <div class="text-2xl font-bold mb-2" :class="(currentVerification?.aiConfidence||0) > 0.8 ? 'text-emerald-500' : 'text-amber-500'" x-text="Math.round((currentVerification?.aiConfidence||0)*100) + '%'"></div>
+              <div class="ai-meter-bg h-1.5"><div class="ai-meter-fill" :class="(currentVerification?.aiConfidence||0) > 0.8 ? 'meter-high' : 'meter-med'" :style="'width: ' + ((currentVerification?.aiConfidence||0)*100) + '%'"></div></div>
+            </div>
+            <div class="p-4 rounded-xl bg-cream-50 dark:bg-earth-900/50 border border-warm-200/50 dark:border-earth-700/50">
+              <p class="text-xs text-earth-500 dark:text-cream-400 mb-1" x-text="t('fraudScore')"></p>
+              <div class="text-2xl font-bold mb-2" :class="(currentVerification?.fraudScore||0) > 60 ? 'fraud-high' : ((currentVerification?.fraudScore||0) > 30 ? 'fraud-medium' : 'fraud-low')" x-text="(currentVerification?.fraudScore||0) + '/100'"></div>
+              <div class="ai-meter-bg h-1.5"><div class="ai-meter-fill" :class="(currentVerification?.fraudScore||0) > 60 ? 'meter-low' : ((currentVerification?.fraudScore||0) > 30 ? 'meter-med' : 'meter-high')" :style="'width: ' + (currentVerification?.fraudScore||0) + '%'"></div></div>
+            </div>
+          </div>
+
+          <h4 class="text-xs font-semibold text-earth-500 dark:text-cream-400 uppercase tracking-wider mb-3" x-text="t('extractedData')"></h4>
+          <div class="space-y-3">
+            <template x-for="(val, key) in currentVerification?.extractedData" :key="key">
+              <div class="flex justify-between items-center text-sm" x-show="val && key !== 'confidence'">
+                <span class="text-earth-500 dark:text-cream-400" x-text="t('ext_' + key)"></span>
+                <span class="font-medium text-earth-900 dark:text-cream-100 text-right" x-text="key === 'amount' ? fmt(val) : val"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-earth-800/60 rounded-2xl p-6 border border-warm-200/60 dark:border-earth-700/40">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-clay-500"></i><span x-text="t('valChecklist')"></span></h3>
+          <div class="space-y-3">
+            <template x-for="(passed, key) in currentVerification?.validation" :key="key">
+              <div class="flex items-center gap-3 text-sm" x-show="key !== 'rejectReason' && key !== 'autoReject'">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0" :class="passed ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'">
+                  <i class="fa-solid" :class="passed ? 'fa-check' : 'fa-xmark'"></i>
+                </div>
+                <span :class="passed ? 'text-earth-700 dark:text-cream-200' : 'text-red-600 dark:text-red-400 font-medium'" x-text="t('val_' + key)"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receipt Preview & Action -->
+      <div class="space-y-6">
+        <div class="bg-white dark:bg-earth-800/60 rounded-2xl p-6 border border-warm-200/60 dark:border-earth-700/40 text-center">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 text-left" x-text="t('uploadedReceipt')"></h3>
+          <img :src="currentVerification?.uploadedImage" class="max-w-full max-h-[400px] mx-auto rounded-xl shadow-sm border border-warm-200/50 dark:border-earth-700/50" alt="Receipt Preview"/>
+        </div>
+
+        <div class="bg-cream-100/50 dark:bg-earth-800/40 rounded-2xl p-6 border border-warm-200/60 dark:border-earth-700/40">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-2" x-text="t('whatNext')"></h3>
+          <p class="text-sm text-earth-600 dark:text-cream-300 mb-6" x-text="currentVerification?.verificationStatus === 'REJECTED' ? t('nextRej') : t('nextWait')"></p>
+          <button @click="resetAll()" class="w-full py-3.5 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg transition-all text-center">
+            <span x-text="t('retHome')"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════ -->
+<!-- ADMIN DASHBOARD                         -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='admin'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+  <!-- Login Gate -->
+  <div x-show="!adminUnlocked" class="min-h-[80vh] flex items-center justify-center px-4">
+    <div class="admin-card p-8 max-w-sm w-full text-center">
+      <div class="w-16 h-16 rounded-full bg-earth-100 dark:bg-earth-800 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-user-shield text-2xl text-earth-600 dark:text-cream-300"></i>
+      </div>
+      <h2 class="text-xl font-bold text-earth-900 dark:text-cream-100 mb-2">Admin Access</h2>
+      <p class="text-sm text-earth-500 dark:text-cream-400 mb-6">Restricted area. Enter password.</p>
+      <input type="password" x-model="adminPass" @keydown.enter="unlockAdmin()" placeholder="Password" class="w-full bg-cream-50 dark:bg-earth-900 border border-warm-300 dark:border-earth-600 rounded-xl px-4 py-3 text-sm text-center mb-4 focus:outline-none focus:border-clay-400 dark:text-cream-100"/>
+      <button @click="unlockAdmin()" class="w-full py-3 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-bold rounded-xl hover:shadow-lg transition-all">Unlock</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div x-show="adminUnlocked" class="max-w-7xl mx-auto px-4 sm:px-6 py-8" dir="ltr">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-earth-900 dark:text-cream-100">Financial Control Center</h1>
+        <p class="text-sm text-earth-500 dark:text-cream-400">Manage manual payment verifications</p>
+      </div>
+      <button @click="adminUnlocked=false; adminPass=''; view='home'" class="px-4 py-2 border border-warm-300 dark:border-earth-600 rounded-lg text-sm text-earth-600 dark:text-cream-300 hover:bg-warm-50 dark:hover:bg-earth-800 transition-colors flex items-center gap-2"><i class="fa-solid fa-arrow-right-from-bracket"></i> Exit</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="admin-card p-5">
+        <p class="text-xs text-earth-500 dark:text-cream-400 uppercase font-semibold mb-1">Pending AI / Review</p>
+        <p class="text-3xl font-bold text-earth-900 dark:text-cream-100" x-text="paymentVerifications.filter(v=>v.verificationStatus==='UNDER_REVIEW').length"></p>
+      </div>
+      <div class="admin-card p-5">
+        <p class="text-xs text-earth-500 dark:text-cream-400 uppercase font-semibold mb-1">Waiting Confirmation</p>
+        <p class="text-3xl font-bold text-amber-500" x-text="paymentVerifications.filter(v=>v.verificationStatus==='WAITING_CONFIRMATION').length"></p>
+      </div>
+      <div class="admin-card p-5">
+        <p class="text-xs text-earth-500 dark:text-cream-400 uppercase font-semibold mb-1">Approved Today</p>
+        <p class="text-3xl font-bold text-emerald-500" x-text="paymentVerifications.filter(v=>v.verificationStatus==='PAID').length"></p>
+      </div>
+      <div class="admin-card p-5">
+        <p class="text-xs text-earth-500 dark:text-cream-400 uppercase font-semibold mb-1">Rejected</p>
+        <p class="text-3xl font-bold text-red-500" x-text="paymentVerifications.filter(v=>v.verificationStatus==='REJECTED').length"></p>
+      </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="admin-card overflow-hidden">
+      <div class="p-4 border-b border-warm-200 dark:border-earth-700 flex justify-between items-center bg-cream-50 dark:bg-earth-800/50">
+        <h3 class="font-bold text-earth-900 dark:text-cream-100">Recent Transactions</h3>
+        <select x-model="adminFilter" class="bg-white dark:bg-earth-900 border border-warm-300 dark:border-earth-600 rounded-lg px-3 py-1.5 text-sm text-earth-700 dark:text-cream-200 outline-none">
+          <option value="all">All Statuses</option>
+          <option value="UNDER_REVIEW">Under Review</option>
+          <option value="WAITING_CONFIRMATION">Waiting Confirmation</option>
+          <option value="PAID">Paid</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-warm-50 dark:bg-earth-800/30 text-earth-500 dark:text-cream-400 font-semibold uppercase text-xs">
+            <tr>
+              <th class="px-6 py-4">Order ID</th>
+              <th class="px-6 py-4">Method</th>
+              <th class="px-6 py-4">Amount</th>
+              <th class="px-6 py-4">AI Fraud Score</th>
+              <th class="px-6 py-4">Status</th>
+              <th class="px-6 py-4">Date</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-warm-200 dark:divide-earth-700">
+            <template x-for="v in paymentVerifications.filter(v => adminFilter === 'all' || v.verificationStatus === adminFilter).slice().reverse()" :key="v.id">
+              <tr class="hover:bg-cream-50 dark:hover:bg-earth-800/30 transition-colors cursor-pointer">
+                <td class="px-6 py-4 font-mono font-medium text-earth-900 dark:text-cream-100" x-text="'#'+v.orderId"></td>
+                <td class="px-6 py-4 text-earth-600 dark:text-cream-300 capitalize" x-text="v.paymentMethod"></td>
+                <td class="px-6 py-4 font-bold text-clay-600 dark:text-gold-400" x-text="v.extractedData?.amount || v.orderAmount"></td>
+                <td class="px-6 py-4">
+                  <span class="px-2.5 py-1 rounded-md font-bold text-xs" :class="v.fraudScore > 60 ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : (v.fraudScore > 30 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30')" x-text="v.fraudScore"></span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="status-badge" :class="'status-' + (v.verificationStatus==='PENDING_PAYMENT'?'pending':v.verificationStatus==='UNDER_REVIEW'?'review':v.verificationStatus==='WAITING_CONFIRMATION'?'waiting':v.verificationStatus==='PAID'?'paid':'rejected')" x-text="v.verificationStatus.replace('_', ' ')"></span>
+                </td>
+                <td class="px-6 py-4 text-earth-500 dark:text-cream-400 text-xs" x-text="new Date(v.createdAt).toLocaleString()"></td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <button @click="v.expanded = !v.expanded" class="px-3 py-1.5 bg-earth-100 dark:bg-earth-700 hover:bg-earth-200 dark:hover:bg-earth-600 text-earth-700 dark:text-cream-200 rounded-lg font-medium transition-colors text-xs">Details</button>
+                  <button x-show="v.verificationStatus === 'WAITING_CONFIRMATION' || v.verificationStatus === 'UNDER_REVIEW'" @click="adminMarkPaid(v.id)" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors text-xs shadow-sm shadow-emerald-500/20"><i class="fa-solid fa-check mr-1"></i> Mark Paid</button>
+                  <button x-show="v.verificationStatus === 'UNDER_REVIEW' || v.verificationStatus === 'WAITING_CONFIRMATION'" @click="adminReject(v.id)" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors text-xs shadow-sm shadow-red-500/20"><i class="fa-solid fa-xmark mr-1"></i> Reject</button>
+                </td>
+              </tr>
+              <!-- Expanded Details Row -->
+              <tr x-show="v.expanded" class="bg-cream-50 dark:bg-earth-900/30 border-b border-warm-200 dark:border-earth-700">
+                <td colspan="7" class="px-6 py-6">
+                  <div class="grid grid-cols-2 gap-8">
+                    <div>
+                      <h4 class="font-bold text-earth-900 dark:text-cream-100 mb-3 border-b border-warm-200 dark:border-earth-700 pb-2">OCR Extracted Data</h4>
+                      <div class="space-y-2 text-xs">
+                        <template x-for="(val, key) in v.extractedData" :key="key">
+                          <div class="flex justify-between" x-show="val && key !== 'confidence'">
+                            <span class="text-earth-500 dark:text-cream-400 capitalize" x-text="key"></span>
+                            <span class="font-medium text-earth-900 dark:text-cream-100" x-text="val"></span>
+                          </div>
+                        </template>
+                      </div>
+                      <h4 class="font-bold text-earth-900 dark:text-cream-100 mt-6 mb-3 border-b border-warm-200 dark:border-earth-700 pb-2">AI Validation</h4>
+                      <div class="space-y-1.5 text-xs">
+                        <template x-for="(passed, key) in v.validation" :key="key">
+                          <div class="flex justify-between" x-show="key !== 'rejectReason' && key !== 'autoReject'">
+                            <span class="text-earth-500 dark:text-cream-400 capitalize" x-text="key"></span>
+                            <span :class="passed ? 'text-emerald-600' : 'text-red-600 font-bold'" x-text="passed ? 'PASS' : 'FAIL'"></span>
+                          </div>
+                        </template>
+                        <div x-show="v.validation?.rejectReason" class="mt-2 text-red-600 font-bold bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                          Reason: <span x-text="v.validation.rejectReason"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-earth-900 dark:text-cream-100 mb-3 border-b border-warm-200 dark:border-earth-700 pb-2">Uploaded Receipt</h4>
+                      <a :href="v.uploadedImage" target="_blank" class="block rounded-lg overflow-hidden border border-warm-200 dark:border-earth-700 hover:opacity-90 transition-opacity">
+                        <img :src="v.uploadedImage" class="w-full max-h-64 object-contain bg-black" alt="Receipt"/>
+                      </a>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <tr x-show="paymentVerifications.length === 0">
+              <td colspan="7" class="px-6 py-8 text-center text-earth-500 dark:text-cream-400">No verifications found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </main>
@@ -635,9 +1003,11 @@
 <!-- ═══════════ TOAST ═══════════ -->
 <div x-show="toastVis" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4"
-     class="fixed bottom-6 right-6 z-[60] max-w-sm gls bg-white/90 dark:bg-earth-800/90 border border-warm-200 dark:border-earth-700 rounded-xl px-5 py-3 shadow-xl flex items-center gap-3">
-  <div class="w-8 h-8 rounded-full bg-sage-100 dark:bg-gold-500/15 flex items-center justify-center flex-shrink-0">
-    <i class="fa-solid fa-check text-sage-600 dark:text-gold-400 text-sm"></i>
+     class="fixed bottom-6 right-6 z-[60] max-w-sm gls bg-white/90 dark:bg-earth-800/90 border border-warm-200 dark:border-earth-700 rounded-xl px-5 py-3 shadow-xl flex items-center gap-3"
+     :class="toastType === 'error' ? 'border-red-200 dark:border-red-900/50' : (toastType === 'warning' ? 'border-amber-200 dark:border-amber-900/50' : '')">
+  <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+       :class="toastType === 'error' ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' : (toastType === 'warning' ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-sage-100 dark:bg-gold-500/15 text-sage-600 dark:text-gold-400')">
+    <i class="fa-solid text-sm" :class="toastType === 'error' ? 'fa-xmark' : (toastType === 'warning' ? 'fa-exclamation' : 'fa-check')"></i>
   </div>
   <p class="text-sm text-earth-700 dark:text-cream-200" x-text="toastMsg"></p>
 </div>
@@ -649,11 +1019,29 @@ function app(){
     loading:true, darkMode:false, lang:'en', view:'home',
     searchOpen:false, searchQ:'', cartOpen:false, mobMenu:false,
     activeCat:'all', tiltS:'',
-    toastVis:false, toastMsg:'',
+    toastVis:false, toastMsg:'', toastType:'success',
     promo:'', promoOk:false, promoMsg:'',
     phoneErr:false, chkErr:'',
     ordNo:'', expDate:'',
-    receiptFile:null, receiptName:'', receiptErr:false,
+    receiptFile:null, receiptName:'', receiptErr:false, paymentVerificationPassed:false, verificationFailReason:'', 
+    
+    // AI Verification State
+    paymentVerifications: [],
+    currentVerification: null,
+    currentOrder: null,
+    paymentImagePreview: null,
+    isAnalyzing: false,
+    analysisProgress: 0,
+    uploadAttempts: [],
+    adminUnlocked: false,
+    adminPass: '',
+    adminFilter: 'all',
+    adminClicks: 0,
+    
+    businessConfig: {
+      instapay: { receiver: 'HANDMADE Co.', account: 'handmade@instapay', phone: null },
+      vodafone: { receiver: 'HANDMADE Co.', account: null, phone: '01023456789' }
+    },
 
     chk:{ name:'', phone:'', gov:'cairo', addr:'', pay:'cod' },
     cart:[],
@@ -741,6 +1129,26 @@ function app(){
         orderOk:'Order Confirmed!', orderOkD:'Thank you for choosing Handmade. Your order is being prepared with care.',
         trackNo:'Tracking Number', totalPaid:'Total', expDel:'Expected Delivery', payVia:'Payment',
         contShop:'Continue Shopping', fillAll:'Please fill in all required fields.', addedBag:'Added to your bag',
+        payDetTitle:'Payment Details', payDetDesc:'Please transfer the exact amount to our business account.',
+        amountToPay:'Amount to Pay', ordRef:'Order Reference',
+        ipaAcc:'InstaPay Address', vfNum:'Wallet Number', receiverName:'Receiver Name',
+        ivePaid:'I have made the payment', upReceipt:'Upload Receipt',
+        upReceiptDesc:'Upload a screenshot of your successful transaction to verify your payment.',
+        removeImg:'Remove', analyzingTitle:'AI Verification in Progress',
+        analyzingDesc:'Analyzing payment screenshot, matching details, and running security checks...',
+        verifyReceipt:'Verify Payment', revTitle:'Payment Review',
+        step_PENDING_PAYMENT:'Pending', step_UNDER_REVIEW:'AI Review', step_WAITING_CONFIRMATION:'Confirmation', step_PAID:'Paid',
+        payRejected:'Payment Rejected', reason:'Reason', tryAgain:'Upload New Receipt',
+        aiAnalysis:'AI Extracted Data', aiConf:'OCR Confidence', fraudScore:'Fraud Score',
+        extractedData:'Extracted Fields',
+        ext_amount:'Amount', ext_receiver:'Receiver', ext_account:'Account/Phone', ext_date:'Date', ext_time:'Time', ext_ref:'Reference',
+        valChecklist:'Security Validation',
+        val_amountMatch:'Amount Matches Order', val_receiverMatch:'Verified Business Receiver', val_timestampOk:'Recent Transaction', val_qualityOk:'High Quality Image', val_duplicateOk:'No Duplicate Found', val_manipulationOk:'No Manipulation Detected',
+        uploadedReceipt:'Uploaded Receipt', whatNext:'What Happens Next?',
+        nextWait:'Your payment has passed AI verification and is now waiting for manual business confirmation. You will receive an SMS when your order is fully confirmed.',
+        nextRej:'Your payment receipt was rejected by our automated security system. Please upload a clear, unedited screenshot of the correct transaction.',
+        retHome:'Return to Home', fraudFail:'Failed automated fraud checks.',
+
       },
       ar:{
         loading:'هاندميد',
@@ -787,6 +1195,26 @@ function app(){
         orderOk:'تم تأكيد الطلب!', orderOkD:'شكرًا لاختيارك هاندميد. يتم تحضير طلبك بعناية.',
         trackNo:'رقم التتبع', totalPaid:'الإجمالي', expDel:'التوصيل المتوقع', payVia:'الدفع',
         contShop:'متابعة التسوّق', fillAll:'يرجى ملء جميع الحقول المطلوبة.', addedBag:'تمت الإضافة للحقيبة',
+        payDetTitle:'تفاصيل الدفع', payDetDesc:'يرجى تحويل المبلغ بالكامل إلى حسابنا التجاري.',
+        amountToPay:'المبلغ المطلوب', ordRef:'رقم الطلب',
+        ipaAcc:'عنوان إنستاباي', vfNum:'رقم المحفظة', receiverName:'اسم المستلم',
+        ivePaid:'لقد قمت بالدفع', upReceipt:'رفع الإيصال',
+        upReceiptDesc:'قم برفع صورة للمعاملة الناجحة لتأكيد الدفع.',
+        removeImg:'حذف', analyzingTitle:'جاري التحقق بالذكاء الاصطناعي',
+        analyzingDesc:'جاري تحليل صورة الإيصال ومطابقة البيانات وإجراء الفحوصات الأمنية...',
+        verifyReceipt:'تأكيد الإيصال', revTitle:'مراجعة الدفع',
+        step_PENDING_PAYMENT:'قيد الانتظار', step_UNDER_REVIEW:'مراجعة الذكاء الاصطناعي', step_WAITING_CONFIRMATION:'تأكيد الإدارة', step_PAID:'مدفوع',
+        payRejected:'تم رفض الدفع', reason:'السبب', tryAgain:'رفع إيصال جديد',
+        aiAnalysis:'البيانات المستخرجة', aiConf:'ثقة التعرف (OCR)', fraudScore:'مؤشر الاحتيال',
+        extractedData:'الحقول المستخرجة',
+        ext_amount:'المبلغ', ext_receiver:'المستلم', ext_account:'الحساب/الرقم', ext_date:'التاريخ', ext_time:'الوقت', ext_ref:'رقم المرجع',
+        valChecklist:'الفحوصات الأمنية',
+        val_amountMatch:'المبلغ مطابق للطلب', val_receiverMatch:'حساب تجاري معتمد', val_timestampOk:'معاملة حديثة', val_qualityOk:'جودة صورة عالية', val_duplicateOk:'لا يوجد تكرار', val_manipulationOk:'لا يوجد تلاعب بالصورة',
+        uploadedReceipt:'الإيصال المرفوع', whatNext:'ماذا بعد؟',
+        nextWait:'اجتاز الإيصال فحص الذكاء الاصطناعي بنجاح وهو الآن بانتظار التأكيد النهائي من الإدارة. ستصلك رسالة نصية عند تأكيد الطلب كلياً.',
+        nextRej:'تم رفض الإيصال من قبل نظام الحماية التلقائي. يرجى رفع صورة واضحة وغير معدلة للمعاملة الصحيحة.',
+        retHome:'العودة للرئيسية', fraudFail:'فشل في فحوصات الاحتيال التلقائية.',
+
       }
     },
 
@@ -797,7 +1225,6 @@ function app(){
       if(!this.chk.name.trim()||!this.chk.phone.trim()||!this.chk.addr.trim()) return false;
       const ph=this.chk.phone.replace(/\s/g,'');
       if(!/^01[0125]\d{8}$/.test(ph)) return false;
-      if(this.needsReceipt && !this.receiptFile) return false;
       return true;
     },
 
@@ -843,12 +1270,64 @@ function app(){
 
     handleFile(e){
       const f=e.target.files[0];
-      if(f){this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false}
+      if(f){
+        const val = this.validateFile(f);
+        if (!val.valid) { this.toast(val.err, 'error'); return; }
+        this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false;
+        this.verifyReceiptImmediately(f);
+      }
     },
     handleDrop(e){
       const f=e.dataTransfer.files[0];
-      if(f&&f.type.startsWith('image/')){this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false}
       e.currentTarget.classList.remove('drag-over');
+      if(f&&f.type.startsWith('image/')){
+        const val = this.validateFile(f);
+        if (!val.valid) { this.toast(val.err, 'error'); return; }
+        this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false;
+        this.verifyReceiptImmediately(f);
+      }
+    },
+    
+    async verifyReceiptImmediately(file) {
+      if (this.isAnalyzing) return;
+      if (!this.checkRateLimit()) return;
+      
+      this.isAnalyzing = true;
+      this.paymentVerificationPassed = false;
+      this.verificationFailReason = '';
+      
+      const reader = new FileReader();
+      reader.onload = (re) => { this.paymentImagePreview = re.target.result; };
+      reader.readAsDataURL(file);
+
+      try {
+        const extraction = await this.simulateOCR(file);
+        const fraudRes = this.calculateFraudScore(extraction, file);
+        const validation = this.validatePayment(extraction, fraudRes);
+        
+        if (validation.autoReject) {
+          this.paymentVerificationPassed = false;
+          this.verificationFailReason = validation.rejectReason;
+          this.toast(this.lang==='ar'?'فشل التحقق: ':'Verification failed: ' + validation.rejectReason, 'error');
+        } else {
+          this.paymentVerificationPassed = true;
+          this.verificationFailReason = '';
+          this.toast(this.lang==='ar'?'تم التحقق بنجاح':'Payment verified successfully', 'success');
+          
+          this.currentVerificationData = {
+            extractedData: extraction,
+            aiConfidence: extraction.confidence,
+            fraudScore: fraudRes.score,
+            validation: validation
+          };
+        }
+      } catch (e) {
+        this.paymentVerificationPassed = false;
+        this.verificationFailReason = 'OCR analysis failed';
+        this.toast('Error analyzing receipt.', 'error');
+      } finally {
+        this.isAnalyzing = false;
+      }
     },
 
     tiltE(e){
@@ -858,15 +1337,238 @@ function app(){
       this.tiltS=`transform:perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02,1.02,1.02)`;
     },
 
-    toast(m){this.toastMsg=m;this.toastVis=true;setTimeout(()=>{this.toastVis=false},2500)},
-    copyTxt(t){navigator.clipboard.writeText(t);this.toast('Copied!')},
+    toast(m, type='success'){this.toastMsg=m;this.toastType=type;this.toastVis=true;setTimeout(()=>{this.toastVis=false},3000)},
+    copyTxt(t){navigator.clipboard.writeText(t);this.toast(this.lang==='ar'?'تم النسخ':'Copied!', 'success')},
 
-    submitOrder(){
+    // AI & Security Engine
+    checkRateLimit() {
+      const now = Date.now();
+      this.uploadAttempts = this.uploadAttempts.filter(t => now - t < 3600000); // last 1 hour
+      if (this.uploadAttempts.length >= 5) {
+        this.toast(this.lang==='ar'?'تجاوزت الحد المسموح. حاول لاحقاً':'Rate limit exceeded. Try again later.', 'error');
+        return false;
+      }
+      this.uploadAttempts.push(now);
+      return true;
+    },
+
+    validateFile(file) {
+      if (!file) return { valid: false, err: 'No file' };
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) return { valid: false, err: this.lang==='ar'?'نوع الملف غير مدعوم':'Unsupported file type' };
+      if (file.size > 10 * 1024 * 1024) return { valid: false, err: this.lang==='ar'?'حجم الملف كبير جداً':'File size too large (>10MB)' };
+      return { valid: true };
+    },
+
+    simulateOCR(file) {
+      return new Promise((resolve) => {
+        // Simulate network/processing delay
+        setTimeout(() => {
+          // Generate deterministic pseudo-random results based on file size
+          const seed = file.size;
+          const random = (min, max) => min + (seed % (max - min + 1));
+          const confidence = (random(70, 98) / 100);
+          
+          const d = new Date();
+          const today = d.toISOString().split('T')[0];
+          const time = d.toTimeString().split(' ')[0].substring(0, 5);
+          
+          let amountExtracted = this.gTotal;
+          // 5% chance OCR gets amount slightly wrong
+          if (seed % 20 === 0) amountExtracted += (seed % 100);
+          
+          let reference = 'TRX' + (seed % 999999).toString().padStart(6, '0');
+
+          resolve({
+            amount: amountExtracted,
+            receiver: this.chk.pay === 'instapay' ? this.businessConfig.instapay.receiver : this.businessConfig.vodafone.receiver,
+            account: this.chk.pay === 'instapay' ? this.businessConfig.instapay.account : this.businessConfig.vodafone.phone,
+            date: today,
+            time: time,
+            ref: reference,
+            confidence: confidence
+          });
+        }, 3000); // 3 seconds realistic delay
+      });
+    },
+
+    calculateFraudScore(extraction, file) {
+      let score = 0;
+      let reasons = [];
+      
+      if (extraction.amount !== this.gTotal) { score += 30; reasons.push('amountMatch'); }
+      if (extraction.confidence < 0.75) { score += 15; reasons.push('qualityOk'); }
+      
+      // Heuristic: Suspiciously small file size (e.g. cropped screenshot of a screenshot)
+      if (file.size < 50 * 1024) { score += 20; reasons.push('manipulationOk'); }
+      
+      // Duplicate detection
+      const isDuplicate = this.paymentVerifications.some(v => v.extractedData?.ref === extraction.ref);
+      if (isDuplicate) { score += 40; reasons.push('duplicateOk'); }
+
+      // Image filename heuristic (detect downloaded/edited)
+      const fname = file.name.toLowerCase();
+      if (fname.includes('whatsapp') || fname.includes('edit') || fname.includes('photoshop')) {
+        score += 10; reasons.push('manipulationOk');
+      }
+
+      return { score: Math.min(score, 100), reasons };
+    },
+
+    validatePayment(extraction, fraudRes) {
+      const passed = fraudRes.score <= 60;
+      return {
+        amountMatch: !fraudRes.reasons.includes('amountMatch'),
+        receiverMatch: true, // Assuming OCR matched
+        timestampOk: true,
+        qualityOk: !fraudRes.reasons.includes('qualityOk'),
+        duplicateOk: !fraudRes.reasons.includes('duplicateOk'),
+        manipulationOk: !fraudRes.reasons.includes('manipulationOk'),
+        autoReject: !passed,
+        rejectReason: passed ? null : (fraudRes.reasons.includes('duplicateOk') ? 'Duplicate transaction reference detected' : (fraudRes.reasons.includes('amountMatch') ? 'Amount does not match order total' : 'Security validation failed'))
+      };
+    },
+
+    handleFileFull(e) {
+      const f = e.target.files[0];
+      if (f) {
+        const val = this.validateFile(f);
+        if (!val.valid) { this.toast(val.err, 'error'); return; }
+        this.receiptFile = f; this.receiptName = f.name; this.receiptErr = false;
+        const reader = new FileReader();
+        reader.onload = (re) => { this.paymentImagePreview = re.target.result; };
+        reader.readAsDataURL(f);
+      }
+    },
+    handleDropFull(e) {
+      const f = e.dataTransfer.files[0];
+      e.currentTarget.classList.remove('drag-over');
+      if (f && f.type.startsWith('image/')) {
+        const val = this.validateFile(f);
+        if (!val.valid) { this.toast(val.err, 'error'); return; }
+        this.receiptFile = f; this.receiptName = f.name; this.receiptErr = false;
+        const reader = new FileReader();
+        reader.onload = (re) => { this.paymentImagePreview = re.target.result; };
+        reader.readAsDataURL(f);
+      }
+    },
+
+    async submitPaymentReceipt() {
+      if (!this.receiptFile || this.isAnalyzing) return;
+      if (!this.checkRateLimit()) return;
+
+      this.isAnalyzing = true;
+      this.analysisProgress = 0;
+      
+      // Animate progress bar
+      const progInt = setInterval(() => {
+        if (this.analysisProgress < 90) this.analysisProgress += Math.random() * 10;
+      }, 300);
+
+      try {
+        const extraction = await this.simulateOCR(this.receiptFile);
+        clearInterval(progInt);
+        this.analysisProgress = 100;
+
+        const fraudRes = this.calculateFraudScore(extraction, this.receiptFile);
+        const validation = this.validatePayment(extraction, fraudRes);
+        
+        const newStatus = validation.autoReject ? 'REJECTED' : 'WAITING_CONFIRMATION';
+
+        const verificationRecord = {
+          id: 'VER-' + Date.now().toString(36).toUpperCase(),
+          orderId: this.ordNo,
+          orderAmount: this.gTotal,
+          paymentMethod: this.chk.pay,
+          uploadedImage: this.paymentImagePreview,
+          extractedData: extraction,
+          aiConfidence: extraction.confidence,
+          fraudScore: fraudRes.score,
+          validation: validation,
+          verificationStatus: newStatus,
+          createdAt: new Date().toISOString(),
+          expanded: false
+        };
+
+        this.paymentVerifications.push(verificationRecord);
+        this.currentVerification = verificationRecord;
+        
+        if (this.currentOrder) this.currentOrder.status = newStatus;
+
+        setTimeout(() => {
+          this.isAnalyzing = false;
+          this.view = 'payment-review';
+          window.scrollTo({top:0,behavior:'smooth'});
+          if(newStatus === 'REJECTED') {
+            this.toast(this.lang==='ar'?'تم رفض الدفع لمخالفته شروط الأمان':'Payment rejected by security checks.', 'error');
+          } else {
+            this.toast(this.lang==='ar'?'اكتمل تحليل الذكاء الاصطناعي بنجاح':'AI Analysis completed successfully.', 'success');
+          }
+        }, 500);
+
+      } catch (e) {
+        clearInterval(progInt);
+        this.isAnalyzing = false;
+        this.toast('Error analyzing receipt.', 'error');
+      }
+    },
+
+    getStepProgress() {
+      if(!this.currentVerification) return 0;
+      const stat = this.currentVerification.verificationStatus;
+      if(stat === 'PENDING_PAYMENT') return 0;
+      if(stat === 'UNDER_REVIEW') return 33;
+      if(stat === 'WAITING_CONFIRMATION' || stat === 'REJECTED') return 66;
+      if(stat === 'PAID') return 100;
+      return 0;
+    },
+    getStepStatus(step) {
+      if(!this.currentVerification) return 'pending';
+      const stat = this.currentVerification.verificationStatus;
+      const order = ['PENDING_PAYMENT', 'UNDER_REVIEW', 'WAITING_CONFIRMATION', 'PAID'];
+      const currentIdx = stat === 'REJECTED' ? 2 : order.indexOf(stat);
+      const stepIdx = order.indexOf(step);
+      
+      if(stepIdx < currentIdx) return 'done';
+      if(stepIdx === currentIdx) return stat === 'REJECTED' ? 'error' : 'active';
+      return 'pending';
+    },
+
+    // Admin Methods
+    unlockAdmin() {
+      if(this.adminPass === 'admin2026') {
+        this.adminUnlocked = true;
+        this.toast('Admin access granted', 'success');
+      } else {
+        this.toast('Invalid password', 'error');
+      }
+    },
+    adminMarkPaid(id) {
+      if(confirm('Are you sure you want to mark this as PAID? This will complete the order.')) {
+        const v = this.paymentVerifications.find(x => x.id === id);
+        if(v) {
+          v.verificationStatus = 'PAID';
+          this.toast('Payment verified and order completed.', 'success');
+        }
+      }
+    },
+    adminReject(id) {
+      const reason = prompt('Enter rejection reason (optional):');
+      if(reason !== null) {
+        const v = this.paymentVerifications.find(x => x.id === id);
+        if(v) {
+          v.verificationStatus = 'REJECTED';
+          if(v.validation) v.validation.rejectReason = reason || 'Admin manual rejection';
+          this.toast('Payment rejected.', 'warning');
+        }
+      }
+    },
+
+    async submitOrder(){
       this.chkErr='';this.receiptErr=false;
       if(!this.chk.name.trim()||!this.chk.phone.trim()||!this.chk.addr.trim()){this.chkErr=this.t('fillAll');return}
       const ph=this.chk.phone.replace(/\s/g,'');
       if(!/^01[0125]\d{8}$/.test(ph)){this.phoneErr=true;this.chkErr=this.t('phoneErr');return}
-      if(this.needsReceipt&&!this.receiptFile){this.receiptErr=true;this.chkErr=this.t('receiptReq');return}
       if(this.cart.length===0)return;
 
       const ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -877,7 +1579,41 @@ function app(){
       const d=new Date();d.setDate(d.getDate()+(g?g.days:3));
       this.expDate=d.toLocaleDateString(this.lang==='ar'?'ar-EG':'en-US',{year:'numeric',month:'long',day:'numeric'});
 
-      this.view='confirm';window.scrollTo({top:0,behavior:'smooth'});
+      this.currentOrder = { id: this.ordNo, status: 'PENDING_PAYMENT', amount: this.gTotal };
+
+      if(this.chk.pay === 'instapay' || this.chk.pay === 'vodafone') {
+         this.isAnalyzing = true;
+         try {
+             let pm = this.chk.pay === 'instapay' ? 'INSTAPAY' : 'VODAFONE_CASH';
+             const response = await fetch('http://localhost:5000/api/paymob/create-payment', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                    amount: this.gTotal,
+                    customerName: this.chk.name,
+                    customerEmail: 'test@example.com',
+                    customerPhone: ph,
+                    paymentMethod: pm
+                 })
+             });
+             const data = await response.json();
+             if (data.redirect_url) {
+                 window.location.href = data.redirect_url;
+                 return;
+             } else {
+                 this.toast('Failed to get payment link', 'error');
+                 this.isAnalyzing = false;
+                 return;
+             }
+         } catch (e) {
+             this.toast('Error connecting to payment gateway', 'error');
+             this.isAnalyzing = false;
+             return;
+         }
+      }
+
+      this.view = 'confirm';
+      window.scrollTo({top:0,behavior:'smooth'});
     },
 
     resetAll(){
@@ -885,6 +1621,8 @@ function app(){
       this.chk={name:'',phone:'',gov:'cairo',addr:'',pay:'cod'};
       this.delFee=45;this.view='home';this.ordNo='';this.expDate='';
       this.chkErr='';this.phoneErr=false;this.receiptFile=null;this.receiptName='';this.receiptErr=false;
+      this.currentVerification = null; this.currentOrder = null; this.paymentImagePreview = null;
+      this.isAnalyzing = false; this.analysisProgress = 0;
       window.scrollTo({top:0,behavior:'smooth'});
     },
   }

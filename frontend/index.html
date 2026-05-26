@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HANDMADE — Egyptian Artisan Luxury</title>
+    <meta name="description" content="Premium handmade Egyptian artisan crafts. Ceramics, handwoven rugs, and heritage pieces by native craftsmen using sustainable materials." />
+    
+    <!-- Theme Initializer to prevent flickering -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark) ? 'dark' : 'light';
+        
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark', 'dark-theme');
+          document.documentElement.classList.remove('light-theme');
+        } else {
+          document.documentElement.classList.add('light-theme');
+          document.documentElement.classList.remove('dark', 'dark-theme');
+        }
+      })();
+    </script>
+    
+    <!-- FontAwesome Icon Pack -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

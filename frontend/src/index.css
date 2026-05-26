@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream-50: #FEFDFB;
+  --color-cream-100: #FDF9F3;
+  --color-cream-200: #FAF3E8;
+  --color-cream-300: #F5EADA;
+  --color-cream-400: #EFE0CC;
+  --color-cream-500: #E6D2B5;
+
+  --color-warm-50: #FDFBF7;
+  --color-warm-100: #F9F5ED;
+  --color-warm-200: #F3EDE0;
+  --color-warm-300: #E8DCC8;
+  --color-warm-400: #D9C9A8;
+  --color-warm-500: #C9B48A;
+  --color-warm-600: #B09A6A;
+  --color-warm-700: #8F7A50;
+  --color-warm-800: #6D5D3E;
+  --color-warm-900: #4A3F2C;
+
+  --color-clay-50: #FAF5F0;
+  --color-clay-100: #F0E4D4;
+  --color-clay-200: #E0C6A6;
+  --color-clay-300: #CDA474;
+  --color-clay-400: #B8854C;
+  --color-clay-500: #A06B33;
+  --color-clay-600: #825220;
+  --color-clay-700: #633E18;
+  --color-clay-800: #472B10;
+  --color-clay-900: #2D1B0A;
+
+  --color-gold-50: #FFFDF9;
+  --color-gold-100: #FFF9EC;
+  --color-gold-200: #FFF2D1;
+  --color-gold-300: #FFE6AB;
+  --color-gold-400: #FFD478;
+  --color-gold-500: #D4960A;
+  --color-gold-600: #B07C08;
+  --color-gold-700: #8C6207;
+  --color-gold-800: #6B4B05;
+  --color-gold-900: #4A3403;
+
+  --color-earth-50: #FAF9F8;
+  --color-earth-100: #ECEAE7;
+  --color-earth-200: #D3CFCB;
+  --color-earth-300: #BAB3AB;
+  --color-earth-400: #9E958A;
+  --color-earth-500: #80776C;
+  --color-earth-600: #665F56;
+  --color-earth-700: #4D4741;
+  --color-earth-800: #332F2B;
+  --color-earth-900: #1A1816;
+
+  --color-sage-50: #F4F6F4;
+  --color-sage-100: #E2E6E2;
+  --color-sage-200: #C2CBC2;
+  --color-sage-300: #A3B1A3;
+  --color-sage-400: #869886;
+  --color-sage-500: #687D68;
+  --color-sage-600: #526352;
+  --color-sage-700: #3E4A3E;
+  --color-sage-800: #293129;
+  --color-sage-900: #151915;
+  
+  --font-serif: "Playfair Display", "Noto Kufi Arabic", serif;
+  --font-sans: "Inter", "Noto Kufi Arabic", sans-serif;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9B48A;
+  border-radius: 99px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #8F7A50;
+}
+
+/* Base resets & behavior */
+* {
+  scroll-behavior: smooth;
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
+body {
+  background-color: #FEFDFB; /* cream-50 */
+}
+.dark body {
+  background-color: #1A1816; /* earth-900 */
+}
+
+/* Loader spinner */
+.ld-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2.5px solid #E0C6A6;
+  border-top-color: #B07040;
+  border-radius: 50%;
+  animation: sp .9s linear infinite;
+}
+@keyframes sp {
+  to { transform: rotate(360deg); }
+}
+
+/* Shimmer heading styling */
+.shim {
+  background: linear-gradient(110deg, #B07040 0%, #D4960A 45%, #B07040 55%, #D4960A 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimm 4s ease-in-out infinite;
+}
+@keyframes shimm {
+  0%, 100% { background-position: 200% center; }
+  50% { background-position: 0% center; }
+}
+
+/* Glassmorphism sidebar panels */
+.gls {
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+}
+
+/* Product cards scale & animations */
+.pc {
+  transition: transform .4s cubic-bezier(.25, .46, .45, .94), box-shadow .4s ease;
+}
+.pc:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .08);
+}
+.dark .pc:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+}
+
+/* Qty button animations */
+.qb {
+  transition: all .15s ease;
+}
+.qb:active {
+  transform: scale(.9);
+}
+
+/* ── Payment status badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .75rem;
+  border-radius: 99px;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.badge-pending {
+  background: rgba(212, 150, 10, .13);
+  color: #8B5E08;
+  border: 1px solid rgba(212, 150, 10, .3);
+}
+.dark .badge-pending {
+  background: rgba(212, 150, 10, .15);
+  color: #FFB620;
+  border-color: rgba(212, 150, 10, .25);
+}
+.badge-review {
+  background: rgba(176, 112, 64, .13);
+  color: #7D452D;
+  border: 1px solid rgba(176, 112, 64, .28);
+}
+.dark .badge-review {
+  background: rgba(176, 112, 64, .18);
+  color: #CDA474;
+  border-color: rgba(176, 112, 64, .3);
+}
+.badge-waiting {
+  background: rgba(101, 84, 64, .1);
+  color: #4A3F2C;
+  border: 1px solid rgba(101, 84, 64, .2);
+}
+.dark .badge-waiting {
+  background: rgba(201, 180, 138, .1);
+  color: #C9B48A;
+  border-color: rgba(201, 180, 138, .2);
+}
+.badge-paid {
+  background: rgba(68, 82, 63, .12);
+  color: #364133;
+  border: 1px solid rgba(68, 82, 63, .25);
+}
+.dark .badge-paid {
+  background: rgba(105, 128, 96, .18);
+  color: #A9BCA0;
+  border-color: rgba(105, 128, 96, .3);
+}
+.badge-rejected {
+  background: rgba(239, 68, 68, .08);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, .2);
+}
+.dark .badge-rejected {
+  background: rgba(239, 68, 68, .13);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, .2);
+}
+
+/* ── AI confidence meter ── */
+.ai-track {
+  height: 7px;
+  border-radius: 99px;
+  background: #E8DCC8;
+  overflow: hidden;
+}
+.dark .ai-track {
+  background: #4D4032;
+}
+.ai-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 1.6s cubic-bezier(.4, 0, .2, 1);
+}
+.ai-fill-hi {
+  background: linear-gradient(90deg, #44523F, #849D78);
+}
+.ai-fill-md {
+  background: linear-gradient(90deg, #8B5E08, #CDA474);
+}
+.ai-fill-lo {
+  background: linear-gradient(90deg, #b91c1c, #fca5a5);
+}
+
+/* Upload area dotted zone styling */
+.upload-zone {
+  border: 2px dashed #CDA474;
+  transition: all .3s ease;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: #B07040;
+  background: rgba(176, 112, 64, .05);
+}
+.dark .upload-zone {
+  border-color: #8F7A50;
+}
+.dark .upload-zone:hover, .dark .upload-zone.drag-over {
+  border-color: #D4960A;
+  background: rgba(212, 150, 10, .08);
+}
+
+/* Confetti ring & animations */
+@keyframes cfb {
+  0% { transform: scale(0) rotate(0); opacity: 1; }
+  100% { transform: scale(1.5) rotate(180deg); opacity: 0; }
+}
+.cfr {
+  animation: cfb 1.5s ease-out forwards;
+}
+
+/* Animations for slide drawers */
+@keyframes slide-in-left-kf {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slide-in-right-kf {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left-kf 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in-right {
+  animation: slide-in-right-kf 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spin-slow-kf {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow-kf 4s linear infinite;
+}
+
+/* Shaking animation on card rejection */
+@keyframes shake-kf {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+.animate-shake {
+  animation: shake-kf 0.5s ease-in-out;
+}
+
+/* Hide scrollbars custom helper */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
