@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" x-data="app()" :lang="lang" :dir="dir" :class="{ 'dark': darkMode }">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HANDMADE — Egyptian Artisan Luxury</title>
+  <meta name="description" content="Premium handmade Egyptian artisan crafts. Ceramics, handwoven rugs, and heritage pieces by native craftsmen using sustainable materials."/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cream:   { 50:'#FEFDFB', 100:'#FDF9F3', 200:'#FAF3E8', 300:'#F5EADA', 400:'#EFE0CC', 500:'#E6D2B5' },
+            warm:    { 50:'#FDFBF7', 100:'#F9F5ED', 200:'#F3EDE0', 300:'#E8DCC8', 400:'#D9C9A8', 500:'#C9B48A', 600:'#B09A6A', 700:'#8F7A50', 800:'#6D5D3E', 900:'#4A3F2C' },
+            clay:    { 50:'#FAF5F0', 100:'#F0E4D4', 200:'#E0C6A6', 300:'#CDA474', 400:'#BD8550', 500:'#B07040', 600:'#9A5A35', 700:'#7D452D', 800:'#67392A', 900:'#573225' },
+            gold:    { 50:'#FFF9EB', 100:'#FFEFC6', 200:'#FFDC88', 300:'#FFC94A', 400:'#FFB620', 500:'#D4960A', 600:'#B07A06', 700:'#8B5E08', 800:'#6B480C', 900:'#4E340E' },
+            earth:   { 50:'#F7F5F2', 100:'#EFEBE5', 200:'#DED6C9', 300:'#C8BAA6', 400:'#B09A80', 500:'#9A8268', 600:'#7E6950', 700:'#655440', 800:'#4D4032', 900:'#3A3027' },
+            sage:    { 50:'#F4F6F3', 100:'#E6EBE3', 200:'#CDD8C7', 300:'#A9BCA0', 400:'#849D78', 500:'#698060', 600:'#55664D', 700:'#44523F', 800:'#364133', 900:'#2B342A' },
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['Inter', 'Noto Kufi Arabic', 'sans-serif'],
+            arabic: ['Noto Kufi Arabic', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    [x-cloak]{display:none!important}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#C9B48A;border-radius:99px}
+    .dark ::-webkit-scrollbar-thumb{background:#8F7A50}
+
+    /* Loader */
+    .ld-spinner{width:40px;height:40px;border:2.5px solid #E0C6A6;border-top-color:#B07040;border-radius:50%;animation:sp .9s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    /* Ticker */
+    @keyframes tk{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+    @keyframes tkr{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    [dir="ltr"] .tk-anim{animation:tk 24s linear infinite}
+    [dir="rtl"] .tk-anim{animation:tkr 24s linear infinite}
+
+    /* Shimmer */
+    .shim{background:linear-gradient(110deg,#B07040 0%,#D4960A 45%,#B07040 55%,#D4960A 100%);background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimm 4s ease-in-out infinite}
+    @keyframes shimm{0%,100%{background-position:200% center}50%{background-position:0% center}}
+
+    /* Slide drawer */
+    .sl-in{animation:slI .35s cubic-bezier(.16,1,.3,1) forwards}
+    @keyframes slI{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    [dir="rtl"] .sl-in{animation-name:slIR}
+    @keyframes slIR{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* Badge pulse */
+    .bp{animation:bpp 2s ease-in-out infinite}
+    @keyframes bpp{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+    /* Glass */
+    .gls{backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%)}
+
+    /* Product card */
+    .pc{transition:transform .4s cubic-bezier(.25,.46,.45,.94),box-shadow .4s ease}
+    .pc:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.08)}
+    .dark .pc:hover{box-shadow:0 20px 50px rgba(0,0,0,.35)}
+
+    /* Cat pill */
+    .cp{transition:all .3s ease}
+    .cp:hover{transform:translateY(-2px)}
+
+    /* Qty btn */
+    .qb{transition:all .15s ease}
+    .qb:active{transform:scale(.9)}
+
+    /* Radio card */
+    .rc{transition:all .25s ease}
+
+    /* Tilt */
+    .tlt{transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
+
+    /* Confetti ring */
+    @keyframes cfb{0%{transform:scale(0) rotate(0);opacity:1}100%{transform:scale(1.5) rotate(180deg);opacity:0}}
+    .cfr{animation:cfb 1.5s ease-out forwards}
+
+    /* Fade up observer */
+    .fu{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+    .fu.vis{opacity:1;transform:translateY(0)}
+
+    /* Upload area */
+    .upload-zone{border:2px dashed #CDA474;transition:all .3s ease}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:#B07040;background:rgba(176,112,64,.05)}
+    .dark .upload-zone{border-color:#8F7A50}
+    .dark .upload-zone:hover,.dark .upload-zone.drag-over{border-color:#D4960A;background:rgba(212,150,10,.08)}
+
+    /* Smooth scroll */
+    *{scroll-behavior:smooth}
+
+    /* Image cover helper */
+    .img-cover{object-fit:cover;width:100%;height:100%}
+  </style>
+</head>
+
+<body class="bg-cream-50 text-earth-900 font-sans antialiased overflow-x-hidden dark:bg-earth-900 dark:text-cream-100" x-cloak>
+
+<!-- ═══════════ LOADER ═══════════ -->
+<div x-show="loading" x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-[9999] flex items-center justify-center bg-cream-50 dark:bg-earth-900">
+  <div class="text-center">
+    <div class="ld-spinner mx-auto mb-5 relative"></div>
+    <p class="tracking-[.4em] uppercase text-[11px] font-medium text-clay-500 dark:text-clay-300" x-text="t('loading')"></p>
+  </div>
+</div>
+
+<!-- ═══════════ ANNOUNCEMENT BAR ═══════════ -->
+<div class="bg-earth-900 dark:bg-cream-100 text-cream-200 dark:text-earth-800 text-[11px] font-medium overflow-hidden h-8 flex items-center relative z-50">
+  <div class="whitespace-nowrap tk-anim flex items-center gap-10">
+    <span><i class="fa-solid fa-truck-fast mr-1.5 text-gold-400 dark:text-gold-700"></i><span x-text="t('ann1')"></span></span>
+    <span class="text-clay-400 dark:text-clay-500">✦</span>
+    <span><i class="fa-solid fa-shield-halved mr-1.5 text-gold-400 dark:text-gold-700"></i><span x-text="t('ann2')"></span></span>
+    <span class="text-clay-400 dark:text-clay-500">✦</span>
+    <span><i class="fa-solid fa-leaf mr-1.5 text-sage-400 dark:text-sage-700"></i><span x-text="t('ann3')"></span></span>
+  </div>
+</div>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="sticky top-0 z-50 gls bg-cream-50/80 dark:bg-earth-900/80 border-b border-warm-200/60 dark:border-earth-700/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Brand -->
+      <a href="#" class="flex items-center gap-2.5 group" @click.prevent="view='home'; window.scrollTo({top:0,behavior:'smooth'})">
+        <div class="w-9 h-9 rounded-lg bg-earth-900 dark:bg-cream-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <span class="text-cream-100 dark:text-earth-900 font-serif font-bold text-sm">H</span>
+        </div>
+        <span class="text-[17px] font-serif font-bold tracking-[.15em] hidden sm:inline text-earth-900 dark:text-cream-100">HANDMADE</span>
+      </a>
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-1">
+        <button @click="view='home'; $nextTick(()=>document.getElementById('prod-sec')?.scrollIntoView({behavior:'smooth'}))" class="px-3 py-2 text-sm font-medium text-earth-500 hover:text-clay-600 dark:text-cream-400 dark:hover:text-gold-400 transition-colors" x-text="t('shop')"></button>
+        <button @click="view='home'; $nextTick(()=>document.getElementById('story-sec')?.scrollIntoView({behavior:'smooth'}))" class="px-3 py-2 text-sm font-medium text-earth-500 hover:text-clay-600 dark:text-cream-400 dark:hover:text-gold-400 transition-colors" x-text="t('ourStory')"></button>
+      </div>
+      <!-- Utils -->
+      <div class="flex items-center gap-2">
+        <button @click="toggleLang()" class="w-9 h-9 rounded-full border border-warm-300 dark:border-earth-700 hover:border-clay-400 dark:hover:border-gold-500 flex items-center justify-center text-xs font-bold text-earth-500 dark:text-cream-300 hover:text-clay-600 dark:hover:text-gold-400 transition-all">
+          <span x-text="lang==='en'?'ع':'EN'"></span>
+        </button>
+        <button @click="darkMode=!darkMode" class="w-9 h-9 rounded-full border border-warm-300 dark:border-earth-700 hover:border-clay-400 dark:hover:border-gold-500 flex items-center justify-center text-earth-500 dark:text-cream-300 hover:text-clay-600 dark:hover:text-gold-400 transition-all">
+          <i class="fa-solid text-sm" :class="darkMode?'fa-sun':'fa-moon'"></i>
+        </button>
+        <button @click="searchOpen=!searchOpen" class="w-9 h-9 rounded-full border border-warm-300 dark:border-earth-700 hover:border-clay-400 dark:hover:border-gold-500 flex items-center justify-center text-earth-500 dark:text-cream-300 hover:text-clay-600 dark:hover:text-gold-400 transition-all">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </button>
+        <button @click="cartOpen=true" class="relative w-9 h-9 rounded-full border border-warm-300 dark:border-earth-700 hover:border-clay-400 dark:hover:border-gold-500 flex items-center justify-center text-earth-500 dark:text-cream-300 hover:text-clay-600 dark:hover:text-gold-400 transition-all" id="cart-btn">
+          <i class="fa-solid fa-bag-shopping text-sm"></i>
+          <span x-show="cartCount>0" x-text="cartCount" class="absolute -top-1 -right-1 w-5 h-5 bg-clay-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center bp"></span>
+        </button>
+        <button @click="mobMenu=!mobMenu" class="md:hidden w-9 h-9 rounded-full border border-warm-300 dark:border-earth-700 flex items-center justify-center text-earth-500 dark:text-cream-300 transition-all">
+          <i class="fa-solid" :class="mobMenu?'fa-xmark':'fa-bars'"></i>
+        </button>
+      </div>
+    </div>
+    <div x-show="mobMenu" x-transition class="md:hidden pb-3">
+      <button @click="view='home';$nextTick(()=>document.getElementById('prod-sec')?.scrollIntoView({behavior:'smooth'}));mobMenu=false" class="block w-full text-left px-3 py-2 text-sm text-earth-500 hover:text-clay-600" x-text="t('shop')"></button>
+      <button @click="view='home';$nextTick(()=>document.getElementById('story-sec')?.scrollIntoView({behavior:'smooth'}));mobMenu=false" class="block w-full text-left px-3 py-2 text-sm text-earth-500 hover:text-clay-600" x-text="t('ourStory')"></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ SEARCH OVERLAY ═══════════ -->
+<div x-show="searchOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-4"
+     class="fixed top-24 inset-x-0 z-40 px-4" @click.outside="searchOpen=false" @keydown.escape.window="searchOpen=false">
+  <div class="max-w-2xl mx-auto gls bg-white/90 dark:bg-earth-800/90 rounded-2xl border border-warm-200 dark:border-earth-700 p-4 shadow-xl">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-magnifying-glass text-clay-400"></i>
+      <input type="text" x-model="searchQ" :placeholder="t('searchPh')" class="flex-1 bg-transparent text-earth-900 dark:text-cream-100 placeholder:text-earth-400 dark:placeholder:text-earth-500 outline-none text-sm" @input="filterProds()"/>
+      <button @click="searchOpen=false;searchQ='';filterProds()" class="text-earth-400 hover:text-clay-500 transition-colors"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div x-show="searchQ.length>0 && filtered.length>0" class="mt-3 border-t border-warm-200 dark:border-earth-700 pt-3 max-h-60 overflow-y-auto space-y-1">
+      <template x-for="p in filtered" :key="p.id">
+        <button @click="searchOpen=false;searchQ='';view='home'" class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-warm-100 dark:hover:bg-earth-700/50 transition-colors text-left">
+          <img :src="p.img" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" :alt="t(p.nk)"/>
+          <div class="min-w-0"><p class="text-sm font-medium truncate" x-text="t(p.nk)"></p><p class="text-xs text-earth-400" x-text="fmt(p.price)"></p></div>
+        </button>
+      </template>
+    </div>
+    <div x-show="searchQ.length>0 && filtered.length===0" class="mt-3 border-t border-warm-200 dark:border-earth-700 pt-3 text-center text-sm text-earth-400" x-text="t('noRes')"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- HOME VIEW                               -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='home'">
+
+  <!-- HERO -->
+  <section class="relative min-h-[92vh] flex items-center overflow-hidden bg-gradient-to-b from-cream-100 via-cream-50 to-white dark:from-earth-900 dark:via-earth-900 dark:to-earth-800">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute top-10 -left-40 w-[500px] h-[500px] rounded-full bg-clay-200/20 dark:bg-clay-700/10 blur-3xl"></div>
+      <div class="absolute bottom-10 -right-40 w-[450px] h-[450px] rounded-full bg-gold-200/15 dark:bg-gold-700/8 blur-3xl"></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 relative z-10">
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <!-- Text -->
+        <div class="order-2 lg:order-1 text-center lg:text-left" :class="lang==='ar'?'lg:text-right':'lg:text-left'">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-clay-300/40 dark:border-clay-600/30 bg-clay-50/60 dark:bg-clay-800/20 text-clay-600 dark:text-clay-300 text-xs font-medium mb-6">
+            <span class="w-1.5 h-1.5 rounded-full bg-clay-500 animate-pulse"></span>
+            <span x-text="t('heroBadge')"></span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold leading-[1.1] mb-6">
+            <span class="text-earth-900 dark:text-cream-100" x-text="t('heroT1')"></span><br/>
+            <span class="shim" x-text="t('heroT2')"></span>
+          </h1>
+          <p class="text-earth-500 dark:text-cream-400 text-base sm:text-lg max-w-lg mb-8 leading-relaxed" :class="lang==='ar'?'mx-auto lg:mr-0':'mx-auto lg:ml-0'" x-text="t('heroDesc')"></p>
+          <div class="flex flex-col sm:flex-row items-center gap-4" :class="lang==='ar'?'justify-center lg:justify-end':'justify-center lg:justify-start'">
+            <button @click="$nextTick(()=>document.getElementById('prod-sec')?.scrollIntoView({behavior:'smooth'}))" class="group px-8 py-3.5 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg hover:shadow-earth-900/15 dark:hover:shadow-cream-100/10 transition-all duration-300 flex items-center gap-2">
+              <span x-text="t('shopNow')"></span>
+              <i class="fa-solid transition-transform" :class="lang==='ar'?'fa-arrow-left group-hover:-translate-x-1':'fa-arrow-right group-hover:translate-x-1'"></i>
+            </button>
+            <button @click="$nextTick(()=>document.getElementById('story-sec')?.scrollIntoView({behavior:'smooth'}))" class="px-8 py-3.5 border border-warm-300 dark:border-earth-600 text-earth-600 dark:text-cream-300 font-medium rounded-xl hover:border-clay-400 dark:hover:border-gold-500 hover:text-clay-700 dark:hover:text-gold-400 transition-all duration-300" x-text="t('discoverStory')"></button>
+          </div>
+        </div>
+        <!-- Hero Image -->
+        <div class="order-1 lg:order-2 flex justify-center">
+          <div class="relative w-full max-w-md" @mousemove="tiltE($event)" @mouseleave="tiltS=''">
+            <div class="tlt rounded-3xl overflow-hidden border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800 shadow-2xl shadow-earth-900/8 dark:shadow-black/30" :style="tiltS" id="hero-card">
+              <div class="aspect-[4/5] relative overflow-hidden">
+                <img src="https://loremflickr.com/800/1000/pottery,vase/all" alt="Featured Product" class="img-cover group-hover:scale-105 transition-transform duration-700"/>
+                <div class="absolute inset-0 bg-gradient-to-t from-earth-900/40 to-transparent"></div>
+                <div class="absolute top-4 right-4 px-3 py-1 rounded-full bg-white/80 dark:bg-earth-900/70 border border-warm-200/50 dark:border-earth-700/50 text-clay-600 dark:text-gold-400 text-[10px] font-semibold tracking-wider uppercase gls" x-text="t('featured')"></div>
+              </div>
+              <div class="p-5">
+                <p class="text-[10px] text-clay-500 font-semibold tracking-[.15em] uppercase mb-1" x-text="t('catCeramics')"></p>
+                <h3 class="text-lg font-serif font-bold text-earth-900 dark:text-cream-100 mb-1" x-text="t('p1n')"></h3>
+                <p class="text-earth-400 dark:text-cream-500 text-sm mb-4 leading-relaxed line-clamp-2" x-text="t('p1d')"></p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xl font-bold text-clay-600 dark:text-gold-400" x-text="fmt(3200)"></span>
+                  <button @click="addCart(products[0])" class="px-5 py-2 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold text-sm rounded-xl hover:opacity-90 transition-opacity flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus text-xs"></i><span x-text="t('addBag')"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gold-300/15 dark:bg-gold-600/8 blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-clay-300/10 dark:bg-clay-700/8 blur-2xl pointer-events-none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="prod-sec" class="py-20 bg-white dark:bg-earth-800/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <p class="text-clay-500 dark:text-clay-400 text-xs font-semibold tracking-[.25em] uppercase mb-3" x-text="t('catLabel')"></p>
+        <h2 class="text-3xl sm:text-4xl font-serif font-bold text-earth-900 dark:text-cream-100" x-text="t('catTitle')"></h2>
+      </div>
+      <!-- Pills -->
+      <div class="flex flex-wrap justify-center gap-2 mb-12">
+        <template x-for="c in cats" :key="c.key">
+          <button @click="activeCat=c.key;filterProds()"
+            class="cp px-5 py-2 rounded-full text-sm font-medium border transition-all"
+            :class="activeCat===c.key
+              ?'bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 border-earth-900 dark:border-cream-100 shadow-md'
+              :'bg-white dark:bg-earth-800 text-earth-500 dark:text-cream-400 border-warm-300 dark:border-earth-600 hover:border-clay-400 dark:hover:border-gold-500'">
+            <span x-text="t(c.lk)"></span>
+          </button>
+        </template>
+      </div>
+      <!-- Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="p in filtered" :key="p.id">
+          <div class="pc rounded-2xl overflow-hidden border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800 group">
+            <div class="aspect-[4/3] sm:aspect-square relative overflow-hidden">
+              <img :src="p.img" :alt="t(p.nk)" class="img-cover group-hover:scale-105 transition-transform duration-700"/>
+              <div class="absolute inset-0 bg-gradient-to-t from-earth-900/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <button @click="addCart(p)" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white dark:bg-earth-900 text-earth-900 dark:text-cream-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:bg-clay-500 hover:text-white dark:hover:bg-gold-500 dark:hover:text-earth-900">
+                <i class="fa-solid fa-plus text-sm"></i>
+              </button>
+            </div>
+            <div class="p-5">
+              <p class="text-[10px] text-clay-500 dark:text-clay-400 font-semibold tracking-[.12em] uppercase mb-1.5" x-text="t(p.ck)"></p>
+              <h3 class="text-base font-serif font-semibold text-earth-900 dark:text-cream-100 mb-1.5 line-clamp-1" x-text="t(p.nk)"></h3>
+              <p class="text-xs text-earth-500 dark:text-cream-500 mb-4 line-clamp-2" x-text="t(p.dk)"></p>
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-bold text-clay-600 dark:text-gold-400" x-text="fmt(p.price)"></span>
+                <button @click="addCart(p)" class="text-xs px-4 py-2 rounded-lg bg-cream-200 dark:bg-earth-700 text-earth-700 dark:text-cream-200 hover:bg-earth-900 hover:text-cream-50 dark:hover:bg-gold-500 dark:hover:text-earth-900 transition-colors font-medium" x-text="t('add')"></button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div x-show="filtered.length===0" class="text-center py-20">
+        <i class="fa-solid fa-box-open text-4xl text-warm-300 dark:text-earth-600 mb-4"></i>
+        <p class="text-earth-400" x-text="t('noRes')"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section id="story-sec" class="py-24 relative overflow-hidden bg-earth-900 dark:bg-earth-950">
+    <div class="absolute inset-0 opacity-[.04]" style="background-image:url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22%3E%3Cg fill=%22%23C9B48A%22 fill-opacity=%22.6%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <p class="text-gold-400 text-xs font-semibold tracking-[.3em] uppercase mb-4" x-text="t('stLabel')"></p>
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-cream-100 mb-6" x-text="t('stTitle')"></h2>
+        <p class="text-cream-400 text-base sm:text-lg leading-relaxed" x-text="t('stDesc')"></p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div class="text-center p-8 rounded-2xl border border-earth-700/40 bg-earth-800/30 hover:border-gold-500/30 transition-all duration-500">
+          <div class="text-5xl font-serif font-extrabold text-gold-400 mb-2" style="text-shadow:0 0 30px rgba(255,188,74,.2)">+150</div>
+          <p class="text-cream-300 text-sm font-medium" x-text="t('st1')"></p>
+        </div>
+        <div class="text-center p-8 rounded-2xl border border-earth-700/40 bg-earth-800/30 hover:border-gold-500/30 transition-all duration-500">
+          <div class="text-5xl font-serif font-extrabold text-gold-400 mb-2" style="text-shadow:0 0 30px rgba(255,188,74,.2)">100%</div>
+          <p class="text-cream-300 text-sm font-medium" x-text="t('st2')"></p>
+        </div>
+        <div class="text-center p-8 rounded-2xl border border-earth-700/40 bg-earth-800/30 hover:border-gold-500/30 transition-all duration-500">
+          <div class="text-5xl font-serif font-extrabold text-gold-400 mb-2" style="text-shadow:0 0 30px rgba(255,188,74,.2)">7000+</div>
+          <p class="text-cream-300 text-sm font-medium" x-text="t('st3')"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-warm-200/60 dark:border-earth-700/40 py-12 bg-cream-50 dark:bg-earth-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-earth-900 dark:bg-cream-100 flex items-center justify-center"><span class="text-cream-100 dark:text-earth-900 font-serif font-bold text-xs">H</span></div>
+          <span class="text-sm font-serif font-semibold tracking-[.12em] text-earth-900 dark:text-cream-100">HANDMADE</span>
+        </div>
+        <p class="text-earth-400 dark:text-earth-500 text-xs">© 2026 Handmade. <span x-text="t('rights')"></span></p>
+        <div class="flex items-center gap-4 text-earth-400 dark:text-earth-500">
+          <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#" class="hover:text-clay-500 dark:hover:text-gold-400 transition-colors"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<!-- ════════════════════════════════════════ -->
+<!-- CHECKOUT VIEW                           -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='checkout'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <button @click="view='home'" class="flex items-center gap-2 text-earth-400 hover:text-clay-600 dark:hover:text-gold-400 transition-colors mb-8 text-sm">
+      <i class="fa-solid" :class="lang==='ar'?'fa-arrow-right':'fa-arrow-left'"></i>
+      <span x-text="t('backShop')"></span>
+    </button>
+    <h1 class="text-3xl font-serif font-bold text-earth-900 dark:text-cream-100 mb-8" x-text="t('chkTitle')"></h1>
+
+    <div class="grid lg:grid-cols-5 gap-8">
+      <!-- Form Col -->
+      <div class="lg:col-span-3 space-y-6">
+        <!-- Personal -->
+        <div class="p-6 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-user text-clay-500 text-sm"></i><span x-text="t('perInfo')"></span></h3>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-earth-500 dark:text-cream-400 mb-1.5 font-medium" x-text="t('fName')"></label>
+              <input type="text" x-model="chk.name" class="w-full bg-cream-100/60 dark:bg-earth-700/40 border border-warm-300 dark:border-earth-600 rounded-xl px-4 py-2.5 text-sm text-earth-900 dark:text-cream-100 placeholder:text-earth-300 dark:placeholder:text-earth-500 focus:outline-none focus:border-clay-400 dark:focus:border-gold-500 transition-colors" :placeholder="t('fNamePh')"/>
+            </div>
+            <div>
+              <label class="block text-xs text-earth-500 dark:text-cream-400 mb-1.5 font-medium" x-text="t('phone')"></label>
+              <input type="tel" x-model="chk.phone" @input="valPhone()" class="w-full bg-cream-100/60 dark:bg-earth-700/40 border rounded-xl px-4 py-2.5 text-sm text-earth-900 dark:text-cream-100 placeholder:text-earth-300 dark:placeholder:text-earth-500 focus:outline-none transition-colors" :class="phoneErr?'border-red-400':'border-warm-300 dark:border-earth-600 focus:border-clay-400 dark:focus:border-gold-500'" placeholder="01X XXXX XXXX" dir="ltr"/>
+              <p x-show="phoneErr" class="text-red-500 text-xs mt-1 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="t('phoneErr')"></span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping -->
+        <div class="p-6 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot text-clay-500 text-sm"></i><span x-text="t('shipAddr')"></span></h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs text-earth-500 dark:text-cream-400 mb-1.5 font-medium" x-text="t('gov')"></label>
+              <select x-model="chk.gov" @change="updFee()" class="w-full bg-cream-100/60 dark:bg-earth-700/40 border border-warm-300 dark:border-earth-600 rounded-xl px-4 py-2.5 text-sm text-earth-900 dark:text-cream-100 focus:outline-none focus:border-clay-400 dark:focus:border-gold-500 transition-colors appearance-none cursor-pointer">
+                <template x-for="g in govs" :key="g.key"><option :value="g.key" x-text="t(g.lk)"></option></template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-earth-500 dark:text-cream-400 mb-1.5 font-medium" x-text="t('addr')"></label>
+              <input type="text" x-model="chk.addr" class="w-full bg-cream-100/60 dark:bg-earth-700/40 border border-warm-300 dark:border-earth-600 rounded-xl px-4 py-2.5 text-sm text-earth-900 dark:text-cream-100 placeholder:text-earth-300 dark:placeholder:text-earth-500 focus:outline-none focus:border-clay-400 dark:focus:border-gold-500 transition-colors" :placeholder="t('addrPh')"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="p-6 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-credit-card text-clay-500 text-sm"></i><span x-text="t('payMethod')"></span></h3>
+          <div class="grid sm:grid-cols-3 gap-3">
+            <template x-for="m in payMethods" :key="m.key">
+              <label class="rc flex flex-col items-center gap-2 p-4 rounded-xl border cursor-pointer text-center"
+                :class="chk.pay===m.key?'border-clay-500 dark:border-gold-500 bg-clay-50/40 dark:bg-gold-500/5 shadow-sm':'border-warm-200 dark:border-earth-600 bg-white dark:bg-earth-800/40 hover:border-clay-300 dark:hover:border-earth-500'">
+                <input type="radio" name="pay" :value="m.key" x-model="chk.pay" @change="receiptFile=null;receiptName=''" class="sr-only"/>
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :class="chk.pay===m.key?'bg-clay-100 dark:bg-gold-500/20 text-clay-600 dark:text-gold-400':'bg-cream-200 dark:bg-earth-700 text-earth-400 dark:text-earth-400'">
+                  <i :class="m.icon"></i>
+                </div>
+                <p class="text-xs font-medium" :class="chk.pay===m.key?'text-clay-700 dark:text-gold-400':'text-earth-500 dark:text-cream-400'" x-text="t(m.lk)"></p>
+              </label>
+            </template>
+          </div>
+
+          <!-- InstaPay Info -->
+          <div x-show="chk.pay==='instapay'" x-transition class="mt-5 p-4 rounded-xl bg-clay-50/50 dark:bg-gold-500/5 border border-clay-200/60 dark:border-gold-500/20">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-building-columns text-clay-500 dark:text-gold-400 mt-0.5"></i>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-clay-700 dark:text-gold-400 mb-1" x-text="t('ipaTitle')"></p>
+                <p class="text-xs text-earth-500 dark:text-cream-400 mb-2" x-text="t('ipaDesc')"></p>
+                <div class="flex items-center gap-2 bg-white dark:bg-earth-800 rounded-lg px-3 py-2 border border-warm-200 dark:border-earth-600">
+                  <span class="text-sm font-mono font-semibold text-clay-600 dark:text-gold-300">handmade@instapay</span>
+                  <button @click="copyTxt('handmade@instapay')" class="text-earth-400 hover:text-clay-600 dark:hover:text-gold-400 transition-colors ml-auto"><i class="fa-solid fa-copy text-xs"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vodafone Cash Info -->
+          <div x-show="chk.pay==='vodafone'" x-transition class="mt-5 p-4 rounded-xl bg-clay-50/50 dark:bg-gold-500/5 border border-clay-200/60 dark:border-gold-500/20">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-mobile-screen-button text-clay-500 dark:text-gold-400 mt-0.5"></i>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-clay-700 dark:text-gold-400 mb-1" x-text="t('vfTitle')"></p>
+                <p class="text-xs text-earth-500 dark:text-cream-400 mb-2" x-text="t('vfDesc')"></p>
+                <div class="flex items-center gap-2 bg-white dark:bg-earth-800 rounded-lg px-3 py-2 border border-warm-200 dark:border-earth-600">
+                  <span class="text-sm font-mono font-semibold text-clay-600 dark:text-gold-300">01023456789</span>
+                  <button @click="copyTxt('01023456789')" class="text-earth-400 hover:text-clay-600 dark:hover:text-gold-400 transition-colors ml-auto"><i class="fa-solid fa-copy text-xs"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ RECEIPT UPLOAD (MANDATORY for InstaPay / Vodafone) ═══ -->
+          <div x-show="needsReceipt" x-transition class="mt-5">
+            <label class="block text-xs font-semibold text-earth-700 dark:text-cream-200 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-cloud-arrow-up text-clay-500 dark:text-gold-400"></i>
+              <span x-text="t('uploadLabel')"></span>
+              <span class="text-red-500">*</span>
+            </label>
+            <div class="upload-zone rounded-xl p-6 text-center cursor-pointer relative"
+                 @click="$refs.receiptInput.click()"
+                 @dragover.prevent="$event.currentTarget.classList.add('drag-over')"
+                 @dragleave.prevent="$event.currentTarget.classList.remove('drag-over')"
+                 @drop.prevent="handleDrop($event)">
+              <input type="file" accept="image/*" x-ref="receiptInput" class="sr-only" @change="handleFile($event)" required/>
+              <div x-show="!receiptName">
+                <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-clay-100/60 dark:bg-earth-700/50 flex items-center justify-center">
+                  <i class="fa-solid fa-image text-2xl text-clay-400 dark:text-earth-400"></i>
+                </div>
+                <p class="text-sm font-medium text-earth-600 dark:text-cream-300 mb-1" x-text="t('uploadCta')"></p>
+                <p class="text-xs text-earth-400 dark:text-earth-500" x-text="t('uploadHint')"></p>
+              </div>
+              <div x-show="receiptName" class="flex items-center justify-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-sage-100 dark:bg-sage-800/30 flex items-center justify-center">
+                  <i class="fa-solid fa-file-image text-xl text-sage-600 dark:text-sage-400"></i>
+                </div>
+                <div class="text-left">
+                  <p class="text-sm font-medium text-earth-900 dark:text-cream-100 truncate max-w-[200px]" x-text="receiptName"></p>
+                  <p class="text-xs text-sage-600 dark:text-sage-400 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i><span x-text="t('uploaded')"></span></p>
+                </div>
+                <button @click.stop="receiptFile=null;receiptName=''" class="ml-2 w-7 h-7 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+            </div>
+            <p x-show="receiptErr" class="text-red-500 text-xs mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="t('receiptReq')"></span></p>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button @click="submitOrder()"
+                class="w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 text-lg transition-all duration-300"
+                :class="canSubmit
+                  ? 'bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 hover:shadow-lg hover:shadow-earth-900/15 dark:hover:shadow-cream-100/10 cursor-pointer'
+                  : 'bg-warm-300 dark:bg-earth-600 text-warm-500 dark:text-earth-400 cursor-not-allowed'"
+                :disabled="!canSubmit">
+          <i class="fa-solid fa-lock text-sm"></i>
+          <span x-text="t('placeOrder')"></span>
+        </button>
+        <p x-show="chkErr" class="text-red-500 text-sm text-center flex items-center justify-center gap-1"><i class="fa-solid fa-circle-exclamation"></i><span x-text="chkErr"></span></p>
+      </div>
+
+      <!-- Summary -->
+      <div class="lg:col-span-2">
+        <div class="sticky top-24 p-6 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60">
+          <h3 class="text-base font-semibold text-earth-900 dark:text-cream-100 mb-4" x-text="t('orderSum')"></h3>
+          <div class="space-y-3 mb-4 max-h-48 overflow-y-auto">
+            <template x-for="it in cart" :key="it.p.id">
+              <div class="flex items-center gap-3">
+                <img :src="it.p.img" :alt="t(it.p.nk)" class="w-10 h-10 rounded-lg object-cover flex-shrink-0"/>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-earth-700 dark:text-cream-200 truncate" x-text="t(it.p.nk)"></p>
+                  <p class="text-xs text-earth-400">×<span x-text="it.qty"></span></p>
+                </div>
+                <span class="text-xs font-semibold text-earth-600 dark:text-cream-300" x-text="fmt(it.p.price*it.qty)"></span>
+              </div>
+            </template>
+          </div>
+          <div class="border-t border-warm-200/60 dark:border-earth-700/40 pt-4 space-y-2">
+            <div class="flex justify-between text-sm"><span class="text-earth-400" x-text="t('subtotal')"></span><span class="text-earth-700 dark:text-cream-200" x-text="fmt(subT)"></span></div>
+            <div x-show="disc>0" class="flex justify-between text-sm"><span class="text-emerald-600 dark:text-emerald-400" x-text="t('discount')"></span><span class="text-emerald-600 dark:text-emerald-400" x-text="'-'+fmt(disc)"></span></div>
+            <div class="flex justify-between text-sm"><span class="text-earth-400" x-text="t('insDel')"></span><span class="text-earth-700 dark:text-cream-200" x-text="fmt(delFee)"></span></div>
+            <div class="border-t border-warm-200/60 dark:border-earth-700/40 pt-3 flex justify-between">
+              <span class="font-semibold text-earth-900 dark:text-cream-100" x-text="t('grand')"></span>
+              <span class="text-xl font-bold text-clay-600 dark:text-gold-400" x-text="fmt(gTotal)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════ -->
+<!-- CONFIRMATION VIEW                       -->
+<!-- ════════════════════════════════════════ -->
+<main x-show="view==='confirm'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+  <div class="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div class="max-w-md w-full text-center">
+      <div class="relative mx-auto w-24 h-24 mb-8">
+        <div class="absolute inset-0 rounded-full bg-sage-200/40 dark:bg-gold-500/10 cfr"></div>
+        <div class="w-24 h-24 rounded-full bg-earth-900 dark:bg-gradient-to-br dark:from-gold-400 dark:to-clay-500 flex items-center justify-center shadow-xl">
+          <i class="fa-solid fa-check text-4xl text-cream-50 dark:text-earth-900"></i>
+        </div>
+      </div>
+      <h1 class="text-3xl font-serif font-bold text-earth-900 dark:text-cream-100 mb-2" x-text="t('orderOk')"></h1>
+      <p class="text-earth-500 dark:text-cream-400 mb-8" x-text="t('orderOkD')"></p>
+      <div class="p-6 rounded-2xl border border-warm-200/60 dark:border-earth-700/40 bg-white dark:bg-earth-800/60 mb-6" :class="lang==='ar'?'text-right':'text-left'">
+        <div class="space-y-4">
+          <div class="flex justify-between items-center"><span class="text-sm text-earth-400" x-text="t('trackNo')"></span><span class="text-sm font-mono font-bold text-clay-600 dark:text-gold-400" x-text="ordNo"></span></div>
+          <div class="flex justify-between items-center"><span class="text-sm text-earth-400" x-text="t('totalPaid')"></span><span class="text-sm font-bold text-earth-900 dark:text-cream-100" x-text="fmt(gTotal)"></span></div>
+          <div class="flex justify-between items-center"><span class="text-sm text-earth-400" x-text="t('expDel')"></span><span class="text-sm font-semibold text-earth-700 dark:text-cream-200" x-text="expDate"></span></div>
+          <div class="flex justify-between items-center"><span class="text-sm text-earth-400" x-text="t('payVia')"></span><span class="text-sm text-earth-700 dark:text-cream-200" x-text="t(payMethods.find(m=>m.key===chk.pay)?.lk||'')"></span></div>
+        </div>
+      </div>
+      <button @click="resetAll()" class="w-full py-3.5 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-bag-shopping"></i><span x-text="t('contShop')"></span>
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════ CART DRAWER ═══════════ -->
+<div x-show="cartOpen" class="fixed inset-0 z-50" @keydown.escape.window="cartOpen=false">
+  <div x-show="cartOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+       class="absolute inset-0 bg-earth-900/30 dark:bg-black/50 backdrop-blur-sm" @click="cartOpen=false"></div>
+  <div x-show="cartOpen" :class="lang==='ar'?'left-0 sl-in':'right-0 sl-in'"
+       class="absolute top-0 bottom-0 w-full max-w-md gls bg-cream-50/95 dark:bg-earth-900/95 shadow-2xl flex flex-col"
+       :style="lang==='ar'?'border-right:1px solid rgba(222,214,201,.4)':'border-left:1px solid rgba(222,214,201,.4)'">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-warm-200/60 dark:border-earth-700/40">
+      <h2 class="text-lg font-serif font-bold text-earth-900 dark:text-cream-100 flex items-center gap-2">
+        <i class="fa-solid fa-bag-shopping text-clay-500 dark:text-gold-400"></i>
+        <span x-text="t('yourBag')"></span>
+        <span class="text-sm font-sans font-normal text-earth-400" x-text="'('+cartCount+')'"></span>
+      </h2>
+      <button @click="cartOpen=false" class="w-8 h-8 rounded-full border border-warm-300 dark:border-earth-600 flex items-center justify-center text-earth-400 hover:text-clay-600 dark:hover:text-gold-400 transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
+    </div>
+    <!-- Items -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div x-show="cart.length===0" class="h-full flex flex-col items-center justify-center text-center">
+        <div class="w-20 h-20 rounded-full bg-warm-200/50 dark:bg-earth-700/40 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-bag-shopping text-3xl text-warm-400 dark:text-earth-500"></i>
+        </div>
+        <p class="text-earth-500 dark:text-cream-400 font-medium mb-1" x-text="t('emptyBag')"></p>
+        <p class="text-earth-400 dark:text-earth-500 text-sm" x-text="t('emptyBagD')"></p>
+      </div>
+      <div x-show="cart.length>0" class="space-y-4">
+        <template x-for="(it,idx) in cart" :key="it.p.id">
+          <div class="flex gap-3 p-3 rounded-xl bg-white/70 dark:bg-earth-800/40 border border-warm-200/40 dark:border-earth-700/30">
+            <img :src="it.p.img" :alt="t(it.p.nk)" class="w-16 h-16 rounded-lg object-cover flex-shrink-0"/>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <h4 class="text-sm font-semibold text-earth-900 dark:text-cream-100 truncate" x-text="t(it.p.nk)"></h4>
+                <button @click="remCart(idx)" class="text-earth-400 hover:text-red-500 transition-colors flex-shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+              </div>
+              <p class="text-xs text-earth-400 dark:text-cream-500 truncate" x-text="t(it.p.dk)"></p>
+              <div class="flex items-center justify-between mt-2">
+                <div class="flex items-center gap-1">
+                  <button @click="updQty(idx,-1)" class="qb w-7 h-7 rounded-lg bg-cream-200 dark:bg-earth-700 text-earth-600 dark:text-cream-300 hover:bg-clay-100 dark:hover:bg-gold-500/20 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                  <span class="w-8 text-center text-sm font-medium text-earth-700 dark:text-cream-200" x-text="it.qty"></span>
+                  <button @click="updQty(idx,1)" class="qb w-7 h-7 rounded-lg bg-cream-200 dark:bg-earth-700 text-earth-600 dark:text-cream-300 hover:bg-clay-100 dark:hover:bg-gold-500/20 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <span class="text-sm font-bold text-clay-600 dark:text-gold-400" x-text="fmt(it.p.price*it.qty)"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div x-show="cart.length>0" class="border-t border-warm-200/60 dark:border-earth-700/40 p-6 space-y-4">
+      <!-- Promo -->
+      <div>
+        <div class="flex gap-2">
+          <input type="text" x-model="promo" :placeholder="t('promoPh')" class="flex-1 bg-white dark:bg-earth-800 border border-warm-300 dark:border-earth-600 rounded-xl px-4 py-2 text-sm text-earth-900 dark:text-cream-100 placeholder:text-earth-300 dark:placeholder:text-earth-500 focus:outline-none focus:border-clay-400 dark:focus:border-gold-500 transition-colors" dir="ltr"/>
+          <button @click="applyPromo()" class="px-4 py-2 bg-cream-200 dark:bg-earth-700 text-earth-700 dark:text-cream-200 hover:bg-earth-900 hover:text-cream-50 dark:hover:bg-gold-500 dark:hover:text-earth-900 rounded-xl text-sm font-medium transition-colors" x-text="t('apply')"></button>
+        </div>
+        <p x-show="promoMsg" class="text-xs mt-1.5 flex items-center gap-1" :class="promoOk?'text-emerald-600 dark:text-emerald-400':'text-red-500'">
+          <i class="fa-solid" :class="promoOk?'fa-circle-check':'fa-circle-exclamation'"></i><span x-text="promoMsg"></span>
+        </p>
+      </div>
+      <!-- Totals -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm"><span class="text-earth-400" x-text="t('subtotal')"></span><span class="text-earth-700 dark:text-cream-200" x-text="fmt(subT)"></span></div>
+        <div x-show="disc>0" class="flex justify-between text-sm"><span class="text-emerald-600 dark:text-emerald-400" x-text="t('discount')"></span><span class="text-emerald-600 dark:text-emerald-400" x-text="'-'+fmt(disc)"></span></div>
+        <div class="flex justify-between text-sm"><span class="text-earth-400" x-text="t('insDel')"></span><span class="text-earth-700 dark:text-cream-200" x-text="fmt(delFee)"></span></div>
+        <div class="border-t border-warm-200/60 dark:border-earth-700/40 pt-2 flex justify-between">
+          <span class="font-semibold text-earth-900 dark:text-cream-100" x-text="t('grand')"></span>
+          <span class="text-lg font-bold text-clay-600 dark:text-gold-400" x-text="fmt(gTotal)"></span>
+        </div>
+      </div>
+      <button @click="cartOpen=false;view='checkout'" class="w-full py-3 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-lock text-sm"></i><span x-text="t('checkout')"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div x-show="toastVis" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4"
+     class="fixed bottom-6 right-6 z-[60] max-w-sm gls bg-white/90 dark:bg-earth-800/90 border border-warm-200 dark:border-earth-700 rounded-xl px-5 py-3 shadow-xl flex items-center gap-3">
+  <div class="w-8 h-8 rounded-full bg-sage-100 dark:bg-gold-500/15 flex items-center justify-center flex-shrink-0">
+    <i class="fa-solid fa-check text-sage-600 dark:text-gold-400 text-sm"></i>
+  </div>
+  <p class="text-sm text-earth-700 dark:text-cream-200" x-text="toastMsg"></p>
+</div>
+
+<!-- ═══════════ ALPINE STORE ═══════════ -->
+<script>
+function app(){
+  return{
+    loading:true, darkMode:false, lang:'en', view:'home',
+    searchOpen:false, searchQ:'', cartOpen:false, mobMenu:false,
+    activeCat:'all', tiltS:'',
+    toastVis:false, toastMsg:'',
+    promo:'', promoOk:false, promoMsg:'',
+    phoneErr:false, chkErr:'',
+    ordNo:'', expDate:'',
+    receiptFile:null, receiptName:'', receiptErr:false,
+
+    chk:{ name:'', phone:'', gov:'cairo', addr:'', pay:'cod' },
+    cart:[],
+
+    cats:[
+      {key:'all',lk:'catAll'},
+      {key:'ceramics',lk:'catCeramics'},
+      {key:'rugs',lk:'catRugs'},
+      {key:'tableware',lk:'catTableware'},
+      {key:'textiles',lk:'catTextiles'},
+      {key:'woodwork',lk:'catWoodwork'},
+      {key:'glassware',lk:'catGlassware'},
+    ],
+
+    products:[
+      {id:1, nk:'p1n', dk:'p1d', ck:'catCeramics', cat:'ceramics', price:3200, img:'https://loremflickr.com/600/600/pottery,vase/all'},
+      {id:2, nk:'p2n', dk:'p2d', ck:'catRugs', cat:'rugs', price:18500, img:'https://loremflickr.com/600/600/carpet,rug/all'},
+      {id:3, nk:'p3n', dk:'p3d', ck:'catTableware', cat:'tableware', price:4600, img:'https://loremflickr.com/600/600/ceramic,plate/all'},
+      {id:4, nk:'p4n', dk:'p4d', ck:'catTextiles', cat:'textiles', price:7200, img:'https://loremflickr.com/600/600/kilim,weaving/all'},
+      {id:5, nk:'p5n', dk:'p5d', ck:'catWoodwork', cat:'woodwork', price:5800, img:'https://loremflickr.com/600/600/woodcarving,box/all'},
+      {id:6, nk:'p6n', dk:'p6d', ck:'catGlassware', cat:'glassware', price:3900, img:'https://loremflickr.com/600/600/blown-glass,lamp/all'},
+    ],
+
+    filtered:[],
+
+    govs:[
+      {key:'cairo',lk:'gCairo',fee:45,days:2},
+      {key:'giza',lk:'gGiza',fee:45,days:2},
+      {key:'alex',lk:'gAlex',fee:75,days:3},
+      {key:'delta',lk:'gDelta',fee:85,days:4},
+      {key:'upper',lk:'gUpper',fee:110,days:5},
+    ],
+    delFee:45,
+
+    payMethods:[
+      {key:'cod',lk:'payCOD',icon:'fa-solid fa-money-bill-wave'},
+      {key:'vodafone',lk:'payVF',icon:'fa-solid fa-mobile-screen'},
+      {key:'instapay',lk:'payIPA',icon:'fa-solid fa-building-columns'},
+    ],
+
+    /* ─── i18n ─── */
+    S:{
+      en:{
+        loading:'HANDMADE',
+        ann1:'Free Insured Shipping on orders over 5,000 EGP across Egypt',
+        ann2:'Certificate of Authenticity included with every piece',
+        ann3:'100% Sustainable & Ethically Sourced Materials',
+        shop:'Collection', ourStory:'Our Story',
+        heroBadge:'New Collection 2026',
+        heroT1:'Crafted by Hand,', heroT2:'Treasured Forever',
+        heroDesc:'Discover museum-quality Egyptian artisan craftsmanship, reimagined for the modern connoisseur. Each piece tells a story spanning 5,000 years of civilization.',
+        shopNow:'Shop Collection', discoverStory:'Our Heritage',
+        featured:'FEATURED',
+        catLabel:'Curated Collection', catTitle:'Artisan Masterpieces',
+        catAll:'All', catCeramics:'Ceramics', catRugs:'Rugs & Kilims', catTableware:'Tableware', catTextiles:'Textiles', catWoodwork:'Woodwork', catGlassware:'Glassware',
+        p1n:'Matte Black Clay Vase', p1d:'Hand-thrown terracotta vessel with a raw matte finish, inspired by ancient Egyptian pottery traditions and adorned with artisan detailing.',
+        p2n:'Handwoven Wool Rug', p2d:'Hand-knotted wool rug featuring geometric patterns from the Siwa Oasis tradition. Each knot tied by master weavers.',
+        p3n:'Glazed Terracotta Plate', p3d:'Glazed stoneware plate with hand-painted botanical motifs in earthy tones. Food-safe and oven-friendly.',
+        p4n:'Nomad Bedouin Kilim', p4d:'Flat-weave cotton kilim with vibrant desert-inspired palette and tribal motifs. Handwoven in Upper Egypt.',
+        p5n:'Hand-carved Arabesque Box', p5d:'Intricately carved woodwork box featuring mother-of-pearl inlay and traditional Islamic geometry.',
+        p6n:'Hand-blown Glass Lamp', p6d:'Traditional mouth-blown glass lamp in vibrant colors, crafted by the historic artisans of Cairo.',
+        stLabel:'Our Manifesto', stTitle:'Preserving Egypt\'s Living Heritage',
+        stDesc:'Every piece is a conversation between ancient craftsmanship and contemporary design. We work directly with artisan communities — from Fayoum\'s pottery villages to Upper Egypt\'s weaving cooperatives.',
+        st1:'Native Craftsmen', st2:'Sustainable Materials', st3:'Pieces Delivered',
+        rights:'All rights reserved.',
+        searchPh:'Search our collection...', noRes:'No products found.',
+        yourBag:'Your Bag', emptyBag:'Your bag is empty', emptyBagD:'Explore our collection and find something beautiful.',
+        addBag:'Add to Bag', add:'Add',
+        subtotal:'Subtotal', discount:'Discount (10%)', insDel:'Insured Delivery', grand:'Grand Total',
+        checkout:'Proceed to Checkout',
+        promoPh:'Promo code', apply:'Apply',
+        promoOk:'EGYPT2026 applied! 10% off your order.', promoFail:'Invalid code. Try EGYPT2026.',
+        backShop:'Back to Shop', chkTitle:'Secure Checkout',
+        perInfo:'Personal Information', fName:'Full Name', fNamePh:'Enter your full name',
+        phone:'Mobile Number', phoneErr:'Enter a valid Egyptian mobile (01X XXXX XXXX)',
+        shipAddr:'Shipping Address', gov:'Governorate',
+        gCairo:'Cairo', gGiza:'Giza', gAlex:'Alexandria', gDelta:'Delta Region', gUpper:'Upper Egypt',
+        addr:'Street Address', addrPh:'Building, street, area...',
+        payMethod:'Payment Method', payCOD:'Cash on Delivery', payVF:'Vodafone Cash', payIPA:'InstaPay',
+        ipaTitle:'InstaPay Transfer Details', ipaDesc:'Transfer the total amount to:',
+        vfTitle:'Vodafone Cash Transfer', vfDesc:'Send the total amount to this verified wallet:',
+        uploadLabel:'Upload Payment Receipt', uploadCta:'Click to upload or drag & drop', uploadHint:'PNG, JPG up to 10MB — required for digital payments',
+        uploaded:'Uploaded successfully', receiptReq:'Receipt upload is required for this payment method.',
+        placeOrder:'Confirm Order', orderSum:'Order Summary',
+        orderOk:'Order Confirmed!', orderOkD:'Thank you for choosing Handmade. Your order is being prepared with care.',
+        trackNo:'Tracking Number', totalPaid:'Total', expDel:'Expected Delivery', payVia:'Payment',
+        contShop:'Continue Shopping', fillAll:'Please fill in all required fields.', addedBag:'Added to your bag',
+      },
+      ar:{
+        loading:'هاندميد',
+        ann1:'شحن مجاني مؤمّن على الطلبات فوق ٥٬٠٠٠ ج.م في أنحاء مصر',
+        ann2:'شهادة أصالة مرفقة مع كل قطعة',
+        ann3:'مواد مستدامة ١٠٠٪ من مصادر أخلاقية',
+        shop:'المجموعة', ourStory:'قصتنا',
+        heroBadge:'مجموعة ٢٠٢٦ الجديدة',
+        heroT1:'صُنعت بالأيدي،', heroT2:'تُقدَّر للأبد',
+        heroDesc:'اكتشف حرفية مصرية بجودة المتاحف أُعيد تصوّرها للذوق المعاصر. كل قطعة تروي حكاية ٥ آلاف سنة من الحضارة.',
+        shopNow:'تسوّق المجموعة', discoverStory:'تراثنا',
+        featured:'مميّز',
+        catLabel:'مجموعة مختارة', catTitle:'روائع الحرفيين',
+        catAll:'الكل', catCeramics:'خزف', catRugs:'سجاد وكليم', catTableware:'أواني طعام', catTextiles:'منسوجات', catWoodwork:'أعمال خشبية', catGlassware:'زجاجيات',
+        p1n:'إناء الطين الأسود الفاخر', p1d:'إناء طين محروق يدوي بلمسة خام مستوحاة من تقاليد الفخار المصري القديم مع تفاصيل حرفية.',
+        p2n:'سجاد الصوف المغزول يدويًا', p2d:'سجادة صوف معقودة يدويًا بأنماط هندسية من تراث واحة سيوا. كل عقدة بيد حرفي.',
+        p3n:'طبق الخزف المذهب الريفي', p3d:'طبق حجري مطلي بزخارف نباتية يدوية بألوان ترابية. آمن للطعام والفرن.',
+        p4n:'كليم بدوي أصيل', p4d:'كليم قطني منسوج يدويًا بألوان صحراوية وزخارف قبلية من صعيد مصر.',
+        p5n:'صندوق أرابيسك مطعم بالصدف', p5d:'صندوق خشبي منحوت بدقة مع تطعيمات من الصدف بتصميم هندسي إسلامي أصيل.',
+        p6n:'مصباح الزجاج المنفوخ التراثي', p6d:'مصباح زجاجي تقليدي منفوخ بالفم بألوان زاهية، من صنع حرفيي القاهرة التاريخية.',
+        stLabel:'بيان رسالتنا', stTitle:'نحافظ على تراث مصر الحي',
+        stDesc:'كل قطعة حوار بين حرفية قديمة وتصميم معاصر. نعمل مباشرة مع مجتمعات الحرفيين من قرى الفيوم إلى تعاونيات صعيد مصر.',
+        st1:'حرفي محلي', st2:'مواد مستدامة', st3:'قطعة تم توصيلها',
+        rights:'جميع الحقوق محفوظة.',
+        searchPh:'ابحث في مجموعتنا...', noRes:'لا توجد منتجات.',
+        yourBag:'حقيبتك', emptyBag:'حقيبتك فارغة', emptyBagD:'استكشف مجموعتنا واعثر على شيء جميل.',
+        addBag:'أضف للحقيبة', add:'أضف',
+        subtotal:'المجموع الفرعي', discount:'خصم (١٠٪)', insDel:'توصيل مؤمّن', grand:'الإجمالي',
+        checkout:'إتمام الشراء',
+        promoPh:'كود خصم', apply:'تطبيق',
+        promoOk:'تم تطبيق EGYPT2026! خصم ١٠٪.', promoFail:'كود غير صالح. جرّب EGYPT2026.',
+        backShop:'العودة للمتجر', chkTitle:'الدفع الآمن',
+        perInfo:'المعلومات الشخصية', fName:'الاسم الكامل', fNamePh:'أدخل اسمك الكامل',
+        phone:'رقم الموبايل', phoneErr:'أدخل رقم مصري صحيح (01X XXXX XXXX)',
+        shipAddr:'عنوان الشحن', gov:'المحافظة',
+        gCairo:'القاهرة', gGiza:'الجيزة', gAlex:'الإسكندرية', gDelta:'منطقة الدلتا', gUpper:'صعيد مصر',
+        addr:'العنوان التفصيلي', addrPh:'المبنى، الشارع، المنطقة...',
+        payMethod:'طريقة الدفع', payCOD:'الدفع عند الاستلام', payVF:'فودافون كاش', payIPA:'إنستاباي',
+        ipaTitle:'تفاصيل تحويل إنستاباي', ipaDesc:'حوّل المبلغ الإجمالي إلى:',
+        vfTitle:'تحويل فودافون كاش', vfDesc:'أرسل المبلغ إلى المحفظة المعتمدة:',
+        uploadLabel:'رفع إيصال الدفع', uploadCta:'اضغط للرفع أو اسحب وأفلت', uploadHint:'PNG, JPG حتى 10MB — مطلوب للدفع الإلكتروني',
+        uploaded:'تم الرفع بنجاح', receiptReq:'رفع الإيصال مطلوب لطريقة الدفع هذه.',
+        placeOrder:'تأكيد الطلب', orderSum:'ملخص الطلب',
+        orderOk:'تم تأكيد الطلب!', orderOkD:'شكرًا لاختيارك هاندميد. يتم تحضير طلبك بعناية.',
+        trackNo:'رقم التتبع', totalPaid:'الإجمالي', expDel:'التوصيل المتوقع', payVia:'الدفع',
+        contShop:'متابعة التسوّق', fillAll:'يرجى ملء جميع الحقول المطلوبة.', addedBag:'تمت الإضافة للحقيبة',
+      }
+    },
+
+    get dir(){return this.lang==='ar'?'rtl':'ltr'},
+    get needsReceipt(){return this.chk.pay==='instapay'||this.chk.pay==='vodafone'},
+    get canSubmit(){
+      if(this.cart.length===0) return false;
+      if(!this.chk.name.trim()||!this.chk.phone.trim()||!this.chk.addr.trim()) return false;
+      const ph=this.chk.phone.replace(/\s/g,'');
+      if(!/^01[0125]\d{8}$/.test(ph)) return false;
+      if(this.needsReceipt && !this.receiptFile) return false;
+      return true;
+    },
+
+    init(){
+      this.filtered=[...this.products];
+      setTimeout(()=>{this.loading=false},1400);
+    },
+
+    t(k){return this.S[this.lang]?.[k]||this.S.en?.[k]||k},
+    toggleLang(){this.lang=this.lang==='en'?'ar':'en';this.filterProds()},
+    fmt(a){const f=a.toLocaleString('en-US');return this.lang==='ar'?f+' ج.م':'EGP '+f},
+
+    filterProds(){
+      let r=[...this.products];
+      if(this.activeCat!=='all') r=r.filter(p=>p.cat===this.activeCat);
+      if(this.searchQ.trim()){
+        const q=this.searchQ.toLowerCase();
+        r=r.filter(p=>this.t(p.nk).toLowerCase().includes(q)||this.t(p.dk).toLowerCase().includes(q));
+      }
+      this.filtered=r;
+    },
+
+    addCart(p){
+      const ex=this.cart.find(i=>i.p.id===p.id);
+      if(ex) ex.qty++; else this.cart.push({p,qty:1});
+      this.toast(this.t('addedBag'));
+    },
+    remCart(i){this.cart.splice(i,1)},
+    updQty(i,d){this.cart[i].qty+=d;if(this.cart[i].qty<=0)this.cart.splice(i,1)},
+
+    get cartCount(){return this.cart.reduce((s,i)=>s+i.qty,0)},
+    get subT(){return this.cart.reduce((s,i)=>s+i.p.price*i.qty,0)},
+    get disc(){return this.promoOk?Math.round(this.subT*.1):0},
+    get gTotal(){return this.subT-this.disc+this.delFee},
+
+    applyPromo(){
+      if(this.promo.trim().toUpperCase()==='EGYPT2026'){this.promoOk=true;this.promoMsg=this.t('promoOk')}
+      else{this.promoOk=false;this.promoMsg=this.t('promoFail')}
+    },
+
+    updFee(){const g=this.govs.find(g=>g.key===this.chk.gov);this.delFee=g?g.fee:45},
+    valPhone(){const ph=this.chk.phone.replace(/\s/g,'');this.phoneErr=ph.length>0&&!/^01[0125]\d{8}$/.test(ph)},
+
+    handleFile(e){
+      const f=e.target.files[0];
+      if(f){this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false}
+    },
+    handleDrop(e){
+      const f=e.dataTransfer.files[0];
+      if(f&&f.type.startsWith('image/')){this.receiptFile=f;this.receiptName=f.name;this.receiptErr=false}
+      e.currentTarget.classList.remove('drag-over');
+    },
+
+    tiltE(e){
+      const c=document.getElementById('hero-card');if(!c)return;
+      const r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+      const rx=(y-r.height/2)/25,ry=(r.width/2-x)/25;
+      this.tiltS=`transform:perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02,1.02,1.02)`;
+    },
+
+    toast(m){this.toastMsg=m;this.toastVis=true;setTimeout(()=>{this.toastVis=false},2500)},
+    copyTxt(t){navigator.clipboard.writeText(t);this.toast('Copied!')},
+
+    submitOrder(){
+      this.chkErr='';this.receiptErr=false;
+      if(!this.chk.name.trim()||!this.chk.phone.trim()||!this.chk.addr.trim()){this.chkErr=this.t('fillAll');return}
+      const ph=this.chk.phone.replace(/\s/g,'');
+      if(!/^01[0125]\d{8}$/.test(ph)){this.phoneErr=true;this.chkErr=this.t('phoneErr');return}
+      if(this.needsReceipt&&!this.receiptFile){this.receiptErr=true;this.chkErr=this.t('receiptReq');return}
+      if(this.cart.length===0)return;
+
+      const ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let c='';for(let i=0;i<6;i++)c+=ch[Math.floor(Math.random()*ch.length)];
+      this.ordNo='HDM-'+c;
+
+      const g=this.govs.find(g=>g.key===this.chk.gov);
+      const d=new Date();d.setDate(d.getDate()+(g?g.days:3));
+      this.expDate=d.toLocaleDateString(this.lang==='ar'?'ar-EG':'en-US',{year:'numeric',month:'long',day:'numeric'});
+
+      this.view='confirm';window.scrollTo({top:0,behavior:'smooth'});
+    },
+
+    resetAll(){
+      this.cart=[];this.promo='';this.promoOk=false;this.promoMsg='';
+      this.chk={name:'',phone:'',gov:'cairo',addr:'',pay:'cod'};
+      this.delFee=45;this.view='home';this.ordNo='';this.expDate='';
+      this.chkErr='';this.phoneErr=false;this.receiptFile=null;this.receiptName='';this.receiptErr=false;
+      window.scrollTo({top:0,behavior:'smooth'});
+    },
+  }
+}
+</script>
+</body>
+</html>
