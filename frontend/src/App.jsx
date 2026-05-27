@@ -11,11 +11,11 @@ import PaymentStatus from './pages/PaymentStatus';
 import { useCart, CartProvider } from './hooks/useCart';
 import { useI18n, I18nProvider } from './hooks/useI18n';
 import { useDarkMode, DarkModeProvider } from './hooks/useDarkMode';
-import { createPaymobHostedPayment } from './services/paymobService';
+import { createOrder, createPaymobHostedPayment } from './services/paymobService';
 
 const AppContent = () => {
   const { t, lang, dir } = useI18n();
-  const { gTotal, resetCart, addCart } = useCart();
+  const { cart, gTotal, promo, promoOk, selectedGov, resetCart, addCart } = useCart();
 
   // Core App states
   const [loading, setLoading] = useState(true);
@@ -75,64 +75,70 @@ const AppContent = () => {
 
   const handleCheckoutSubmit = async (formDetails) => {
     setChk(formDetails);
-    
-    // Generate order number
-    const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let c = '';
-    for (let i = 0; i < 6; i++) {
-      c += chs[Math.floor(Math.random() * chs.length)];
-    }
-    const orderNumber = 'HDM-' + c;
-    setOrdNo(orderNumber);
+    setLoading(true);
 
-    // Calculate delivery date based on governorate
-    const d = new Date();
-    const govSpeed = formDetails.gov === 'cairo' || formDetails.gov === 'giza' ? 2 : 3;
-    d.setDate(d.getDate() + govSpeed);
-    const expected = d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    setExpDate(expected);
+    try {
+      // Map payment method to server format
+      let payMethod = 'cod';
+      if (formDetails.pay === 'card') payMethod = 'CARD';
+      else if (formDetails.pay === 'vodafone') payMethod = 'WALLET';
+      else if (formDetails.pay === 'instapay') payMethod = 'INSTAPAY';
 
-    if (formDetails.pay === 'cod') {
-      setView('confirm');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Trigger Paymob Intention API and redirect
-      setLoading(true);
-      try {
-        let method = 'WALLET';
-        if (formDetails.pay === 'instapay') {
-          method = 'INSTAPAY';
-        } else if (formDetails.pay === 'card') {
-          method = 'CARD';
-        }
+      // Step 1: Create order on server (server computes amount from product catalog)
+      const cartItems = cart.map(item => ({
+        productId: item.p.id,
+        quantity: item.qty
+      }));
 
-        const data = await createPaymobHostedPayment({
-          amount: gTotal,
-          customerName: formDetails.name,
-          customerPhone: formDetails.phone,
-          paymentMethod: method,
-          merchantOrderId: orderNumber
-        });
-        
+      const orderData = await createOrder({
+        items: cartItems,
+        customerName: formDetails.name,
+        customerPhone: formDetails.phone,
+        customerAddress: formDetails.addr,
+        governorate: selectedGov,
+        promoCode: promoOk ? promo : '',
+        paymentMethod: payMethod
+      });
+
+      const orderNumber = orderData.orderId;
+      setOrdNo(orderNumber);
+
+      // Calculate expected delivery date
+      const d = new Date();
+      const govSpeed = formDetails.gov === 'cairo' || formDetails.gov === 'giza' ? 2 : 3;
+      d.setDate(d.getDate() + govSpeed);
+      const expected = d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      setExpDate(expected);
+
+      if (formDetails.pay === 'cod') {
+        // COD — order already created on server with COD_CONFIRMED status
         setLoading(false);
-        if (data.redirect_url) {
+        setView('confirm');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Step 2: Create hosted payment (server uses stored amount — no amount sent)
+        const paymentData = await createPaymobHostedPayment({
+          orderId: orderNumber
+        });
+
+        setLoading(false);
+        if (paymentData.redirect_url) {
           showToast(t('securingRedirect'), 'success');
-          // Redirect the browser to secure Paymob Hosted checkout
           setTimeout(() => {
-            window.location.href = data.redirect_url;
+            window.location.href = paymentData.redirect_url;
           }, 800);
         } else {
-          showToast('Failed to retrieve hosted payment link', 'error');
+          showToast(t('serverError'), 'error');
         }
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-        showToast('Connection to payment gateway failed.', 'error');
       }
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      showToast(err.message || t('serverError'), 'error');
     }
   };
 

@@ -1,11 +1,131 @@
 import axios from 'axios';
 import crypto from 'crypto';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-// In-memory database for verified transactions from Paymob Webhooks
-const verifiedTransactions = {};
+// Configure multer for local uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `receipt-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG and PNG images are allowed'));
+    }
+  }
+}).single('receipt');
+
+// Server-Side Product Catalog (prices in EGP)
+const PRODUCT_CATALOG = {
+  1: { name: 'Matte Black Clay Vase', price: 3200, stock: 10 },
+  2: { name: 'Handwoven Wool Rug', price: 18500, stock: 5 },
+  3: { name: 'Glazed Terracotta Plate', price: 4600, stock: 15 },
+  4: { name: 'Nomad Bedouin Kilim', price: 7200, stock: 8 },
+  5: { name: 'Hand-carved Arabesque Box', price: 5800, stock: 12 },
+  6: { name: 'Hand-blown Glass Lamp', price: 3900, stock: 20 }
+};
+
+// Governorate Delivery Fees
+const GOVERNORATE_FEES = {
+  cairo: 45, giza: 45, alex: 75, delta: 85, upper: 110
+};
+
+// Promo Code Config
+const VALID_PROMO_CODE = 'EGYPT2026';
+const PROMO_DISCOUNT_RATE = 0.1; // 10%
+
+// In-Memory Order Store
+const orders = {};
+const verifiedTransactions = {}; // Legacy fallback
+
+export const createOrder = (req, res) => {
+  const { items, customerName, customerPhone, customerAddress, governorate, promoCode, paymentMethod } = req.body;
+
+  if (!items || !items.length) {
+    return res.status(400).json({ error: 'Order must contain at least one item' });
+  }
+
+  if (!customerName || !customerPhone || !customerAddress || !governorate || !paymentMethod) {
+    return res.status(400).json({ error: 'Missing required customer information' });
+  }
+
+  let subtotal = 0;
+  const validatedItems = [];
+
+  for (const item of items) {
+    const product = PRODUCT_CATALOG[item.productId];
+    if (!product) {
+      return res.status(400).json({ error: `Invalid product ID: ${item.productId}` });
+    }
+    if (!item.quantity || item.quantity < 1) {
+      return res.status(400).json({ error: `Invalid quantity for product ID: ${item.productId}` });
+    }
+    subtotal += product.price * item.quantity;
+    validatedItems.push({
+      productId: item.productId,
+      name: product.name,
+      price: product.price,
+      quantity: item.quantity
+    });
+  }
+
+  const discount = (promoCode === VALID_PROMO_CODE) ? Math.round(subtotal * PROMO_DISCOUNT_RATE) : 0;
+  const deliveryFee = GOVERNORATE_FEES[governorate] || 45; // Default to 45 if unknown
+  const expectedAmount = subtotal - discount + deliveryFee;
+
+  const orderId = 'HDM-' + crypto.randomUUID().substring(0, 8).toUpperCase();
+  const status = paymentMethod === 'cod' ? 'COD_CONFIRMED' : 'CREATED';
+
+  orders[orderId] = {
+    orderId,
+    items: validatedItems,
+    subtotal,
+    discount,
+    deliveryFee,
+    expectedAmount,
+    customerName,
+    customerPhone,
+    customerAddress,
+    governorate,
+    paymentMethod,
+    status,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    paymobOrderId: null,
+    transactionId: null
+  };
+
+  res.json({ orderId, expectedAmount, status });
+};
 
 export const createHostedPayment = async (req, res) => {
-  const { amount, customerName, customerEmail, customerPhone, paymentMethod, merchantOrderId } = req.body;
+  const { orderId } = req.body;
+
+  const order = orders[orderId];
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+
+  if (order.status !== 'CREATED') {
+    return res.status(400).json({ error: `Cannot initiate payment for order in status: ${order.status}` });
+  }
+
+  const { expectedAmount: amount, paymentMethod, customerName, customerPhone } = order;
+
+  order.status = 'PENDING_PAYMENT';
+  order.updatedAt = new Date().toISOString();
 
   try {
     // Check if we are running in simulator fallback mode
@@ -15,8 +135,8 @@ export const createHostedPayment = async (req, res) => {
 
     if (isMockCredentials) {
       console.log(`[Paymob Simulator] Detected mock credentials. Launching high-fidelity Sandbox Iframe!`);
-      const redirectUrl = `http://localhost:5000/paymob-sandbox-iframe?amount=${amount}&orderId=${merchantOrderId}&method=${paymentMethod}&customerName=${encodeURIComponent(customerName || '')}&customerPhone=${customerPhone || ''}`;
-      return res.json({ redirect_url: redirectUrl, orderId: merchantOrderId });
+      const redirectUrl = `http://localhost:5000/paymob-sandbox-iframe?orderId=${orderId}`;
+      return res.json({ redirect_url: redirectUrl, orderId });
     }
 
     // Choose correct integration ID
@@ -39,21 +159,22 @@ export const createHostedPayment = async (req, res) => {
       delivery_needed: "false",
       amount_cents: amount * 100,
       currency: "EGP",
-      merchant_order_id: merchantOrderId, // Bind our internal tracking ID
+      merchant_order_id: orderId, // Bind our internal tracking ID
       items: []
     });
-    const orderId = orderResponse.data.id;
+    const paymobOrderId = orderResponse.data.id;
+    order.paymobOrderId = paymobOrderId;
 
     // Step 3: Payment Key Generation
     const paymentKeyResponse = await axios.post('https://accept.paymob.com/api/acceptance/payment_keys', {
       auth_token: authToken,
       amount_cents: amount * 100,
       expiration: 3600,
-      order_id: orderId,
+      order_id: paymobOrderId,
       billing_data: {
-        apartment: "NA", email: customerEmail || "test@example.com", floor: "NA", first_name: customerName || "Test",
+        apartment: "NA", email: "test@example.com", floor: "NA", first_name: customerName || "Test",
         street: "NA", building: "NA", phone_number: customerPhone, shipping_method: "NA",
-        postal_code: "NA", city: "NA", country: "EG", last_name: customerName || "User", state: "NA"
+        postal_code: "NA", city: "NA", country: "EG", last_name: "User", state: "NA"
       },
       currency: "EGP",
       integration_id: integrationId
@@ -68,11 +189,14 @@ export const createHostedPayment = async (req, res) => {
 
   } catch (error) {
     console.warn('[Paymob API Warning] Live connection failed or credentials invalid:', error?.response?.data || error.message);
-    console.log('[Paymob Simulator] Activating high-fidelity Sandbox Iframe Fallback!');
     
-    const redirectUrl = `http://localhost:5000/paymob-sandbox-iframe?amount=${amount}&orderId=${merchantOrderId}&method=${paymentMethod}&customerName=${encodeURIComponent(customerName || '')}&customerPhone=${customerPhone || ''}`;
-    
-    res.json({ redirect_url: redirectUrl, orderId: merchantOrderId });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Paymob Simulator] Activating high-fidelity Sandbox Iframe Fallback!');
+      const redirectUrl = `http://localhost:5000/paymob-sandbox-iframe?orderId=${orderId}`;
+      res.json({ redirect_url: redirectUrl, orderId });
+    } else {
+      res.status(503).json({ error: 'Payment gateway temporarily unavailable' });
+    }
   }
 };
 
@@ -81,7 +205,14 @@ export const paymobWebhook = async (req, res) => {
   const hmacReceived = req.query.hmac;
   const obj = req.body.obj;
 
-  if (!obj) return res.status(400).send('Bad Request');
+  if (!obj) {
+    console.error('[Webhook Error] Received request with missing body payload (obj is missing).');
+    return res.status(400).json({ error: 'Bad Request: Missing webhook body payload' });
+  }
+
+  // Securely log details of the received webhook request without exposing sensitive PAN data
+  const maskedPan = obj.source_data?.pan ? obj.source_data.pan.replace(/(?<=.{4}).(?=.{4})/g, '*') : 'N/A';
+  console.log(`[Webhook Received] Processing callback. Order ID: ${obj.order?.merchant_order_id || obj.order?.id}, Transaction ID: ${obj.id}, Amount (cents): ${obj.amount_cents}, Success: ${obj.success}, Method: ${obj.source_data?.sub_type || obj.source_data?.type || 'N/A'}, Masked PAN: ${maskedPan}, Query HMAC: ${hmacReceived}`);
 
   const concatenatedString = [
     obj.amount_cents,
@@ -115,7 +246,7 @@ export const paymobWebhook = async (req, res) => {
     const transactionId = obj.id;
     const method = obj.source_data?.sub_type || obj.source_data?.type || 'PAYMOB';
     const totalAmount = obj.amount_cents / 100;
-    
+
     let status = 'PENDING';
     if (obj.success === true) {
       status = 'PAID';
@@ -123,43 +254,199 @@ export const paymobWebhook = async (req, res) => {
       status = 'FAILED';
     }
 
-    // Save/Update verified status
-    verifiedTransactions[internalOrderId] = {
-      transactionId: transactionId.toString(),
-      paymentMethod: method,
-      amount: totalAmount,
-      orderId: internalOrderId,
-      status: status,
-      updatedAt: new Date().toISOString()
-    };
+    const order = orders[internalOrderId];
 
-    console.log(`Webhook signature verified! Order ${internalOrderId} is now ${status}. Transaction ID: ${transactionId}`);
+    // Enforce Duplicate Payment Reference Check to reject duplicate transaction references across different orders
+    const isDuplicateTx = Object.values(orders).some(o => o.transactionId === transactionId.toString() && o.orderId !== internalOrderId) || 
+                          Object.values(verifiedTransactions).some(vt => vt.transactionId === transactionId.toString() && vt.orderId !== internalOrderId);
+    
+    if (isDuplicateTx) {
+      console.error(`[Webhook Security Alert] Duplicate transaction ID detected: ${transactionId} for order ${internalOrderId}. This transaction reference was already used for another order!`);
+      if (order) {
+        order.status = 'FAILED';
+        order.updatedAt = new Date().toISOString();
+      }
+      return res.status(400).json({ error: 'Duplicate transaction reference detected' });
+    }
+
+    if (!order) {
+      console.warn(`[Webhook Warning] Order ${internalOrderId} not found in memory store. Recording in legacy storage.`);
+      verifiedTransactions[internalOrderId] = {
+        transactionId: transactionId.toString(),
+        paymentMethod: method,
+        amount: totalAmount,
+        orderId: internalOrderId,
+        status: status,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      if (order.status !== 'PENDING_PAYMENT') {
+        console.warn(`[Webhook] Order ${internalOrderId} received webhook but status is currently ${order.status}. Ignoring.`);
+        return res.status(200).send('Transaction processed');
+      }
+
+      if (obj.amount_cents !== order.expectedAmount * 100) {
+        console.error(`[Webhook Security Mismatch] Amount mismatch for order ${internalOrderId}! Expected ${order.expectedAmount * 100} cents, but received webhook indicates ${obj.amount_cents} cents! Rejecting payment.`);
+        order.status = 'FAILED';
+        order.updatedAt = new Date().toISOString();
+        return res.status(200).send('Transaction processed');
+      }
+
+      if (obj.success === true) {
+        if (order.status !== 'PAID') {
+          // Decrement stock only once when transitioning to PAID
+          for (const item of order.items) {
+            if (PRODUCT_CATALOG[item.productId]) {
+              PRODUCT_CATALOG[item.productId].stock = Math.max(0, PRODUCT_CATALOG[item.productId].stock - item.quantity);
+            }
+          }
+        }
+        order.status = 'PAID';
+        order.transactionId = transactionId.toString();
+        // Save to legacy storage for global dashboard visibility
+        verifiedTransactions[internalOrderId] = {
+          transactionId: transactionId.toString(),
+          paymentMethod: method,
+          amount: totalAmount,
+          orderId: internalOrderId,
+          status: 'PAID',
+          updatedAt: new Date().toISOString()
+        };
+      } else if (obj.success === false || obj.error_occured === true) {
+        order.status = 'FAILED';
+      }
+      order.updatedAt = new Date().toISOString();
+    }
+
+    console.log(`[Webhook Success] Webhook signature verified successfully! Order ${internalOrderId} updated to status: ${status}. Transaction ID: ${transactionId}`);
     res.status(200).send('Transaction processed');
   } else {
-    console.error('Invalid Paymob Webhook signature received!');
+    console.error(`[Webhook Security Failure] Invalid Paymob Webhook signature received! Calculated: ${hashed}, Received: ${hmacReceived}`);
     res.status(401).send('Invalid signature');
   }
 };
 
-export const getOrderStatus = async (req, res) => {
+export const getOrderStatus = (req, res) => {
   const { orderId } = req.params;
-  const transaction = verifiedTransactions[orderId];
+  const order = orders[orderId];
   
-  if (transaction) {
-    res.json(transaction);
-  } else {
-    // If no webhook has arrived yet, return PENDING state
-    res.json({
-      orderId,
-      status: 'PENDING',
-      message: 'Transaction is pending webhook callback'
-    });
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
   }
+
+  if (order.status === 'PENDING_PAYMENT') {
+    const now = new Date();
+    const updatedAt = new Date(order.updatedAt);
+    const diffMinutes = (now - updatedAt) / (1000 * 60);
+    
+    if (diffMinutes > 15) {
+      order.status = 'EXPIRED';
+      order.updatedAt = now.toISOString();
+    }
+  }
+
+  res.json({
+    orderId: order.orderId,
+    status: order.status,
+    expectedAmount: order.expectedAmount,
+    transactionId: order.transactionId,
+    paymentMethod: order.paymentMethod,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    receiptUrl: order.receiptUrl || null
+  });
+};
+
+// --- InstaPay Manual Upload Flow ---
+export const uploadInstaPayReceipt = (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    const { orderId } = req.params;
+    const { transactionReference } = req.body;
+    const file = req.file;
+
+    const order = orders[orderId];
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.status !== 'PENDING_PAYMENT') return res.status(400).json({ error: 'Order is not waiting for payment' });
+    if (!file) return res.status(400).json({ error: 'Receipt image is required' });
+    if (!transactionReference) return res.status(400).json({ error: 'Transaction reference is required' });
+
+    // Check for duplicate transaction reference
+    const isDuplicate = Object.values(orders).some(o => o.transactionId === transactionReference) || 
+                        Object.values(verifiedTransactions).some(vt => vt.transactionId === transactionReference);
+    
+    if (isDuplicate) {
+      // Delete uploaded file if duplicate rejected
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: 'This transaction reference has already been used.' });
+    }
+
+    // --- Mock AI Content Verification (Verify image belongs to handmade products) ---
+    // In a real scenario, this is where we would call an AI Vision API.
+    // For now, we simulate approval of valid images.
+    const isImageValid = true; // Replace with actual verification logic
+    if (!isImageValid) {
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: 'Image verification failed. Unrelated image detected.' });
+    }
+
+    const receiptUrl = `http://localhost:5000/uploads/${file.filename}`;
+
+    order.transactionId = transactionReference;
+    order.receiptUrl = receiptUrl;
+    order.status = 'PENDING_VERIFICATION';
+    order.updatedAt = new Date().toISOString();
+
+    // Make it visible to admin dashboard via verifiedTransactions mock
+    verifiedTransactions[orderId] = {
+      transactionId: transactionReference,
+      paymentMethod: 'INSTAPAY',
+      amount: order.expectedAmount,
+      orderId: orderId,
+      status: 'PENDING_VERIFICATION',
+      uploadedImage: receiptUrl,
+      updatedAt: order.updatedAt
+    };
+
+    res.json({ success: true, status: order.status, receiptUrl });
+  });
+};
+
+export const cancelOrder = (req, res) => {
+  const { orderId } = req.params;
+  const order = orders[orderId];
+
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+
+  if (order.status !== 'CREATED' && order.status !== 'PENDING_PAYMENT') {
+    return res.status(400).json({ error: `Cannot cancel order in status: ${order.status}` });
+  }
+
+  order.status = 'CANCELLED';
+  order.updatedAt = new Date().toISOString();
+
+  res.json({ orderId: order.orderId, status: order.status });
 };
 
 // High-fidelity Sandbox Checkout Simulation Iframe View
 export const serveSandboxIframe = (req, res) => {
-  const { amount, orderId, method, customerName, customerPhone } = req.query;
+  const { orderId } = req.query;
+
+  const order = orders[orderId];
+  if (!order) {
+    return res.status(404).send('Order not found');
+  }
+  
+  if (order.status !== 'PENDING_PAYMENT') {
+    return res.status(400).send('Invalid order status');
+  }
+
+  const { expectedAmount: amount, paymentMethod: method, customerName, customerPhone } = order;
 
   const html = `
 <!DOCTYPE html>
@@ -315,8 +602,6 @@ export const serveSandboxIframe = (req, res) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: '${orderId}',
-            amount: ${amount},
-            method: '${method}',
             success: success
           })
         });
@@ -352,7 +637,21 @@ export const serveSandboxIframe = (req, res) => {
 // Triggers the webhook signing logic internally using the actual server HMAC verification flow!
 export const sandboxTriggerWebhook = async (req, res) => {
   try {
-    const { orderId, amount, method, success } = req.body;
+    const { orderId, success } = req.body;
+    
+    const order = orders[orderId];
+    if (!order) {
+      console.error(`[Sandbox Trigger Error] Order ${orderId} not found`);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    if (order.status !== 'PENDING_PAYMENT') {
+      console.error(`[Sandbox Trigger Error] Order ${orderId} is in invalid status for payment simulation: ${order.status}`);
+      return res.status(400).json({ error: 'Invalid order status' });
+    }
+
+    const amount = order.expectedAmount;
+    const method = order.paymentMethod;
+
     const hmacSecret = process.env.PAYMOB_HMAC_SECRET || 'your_hmac_secret';
 
     const mockObj = {
@@ -411,12 +710,19 @@ export const sandboxTriggerWebhook = async (req, res) => {
                        .update(concatenatedString)
                        .digest('hex');
 
+    // Dynamically resolve the host and protocol from the request context to fully support Ngrok / tunnels
+    const host = req.headers.host || `localhost:${process.env.PORT || 5000}`;
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const webhookUrl = `${protocol}://${host}/api/paymob/webhook?hmac=${hash}`;
+
+    console.log(`[Sandbox Simulation] Triggering webhook callback at: ${webhookUrl}`);
+
     // Trigger local webhook route handler directly
-    await axios.post(`http://localhost:5000/api/paymob/webhook?hmac=${hash}`, { obj: mockObj });
+    await axios.post(webhookUrl, { obj: mockObj });
 
     res.json({ success: true });
   } catch (error) {
-    console.error("Sandbox webhook trigger failed:", error.message);
+    console.error("[Sandbox Trigger Failure] Webhook simulation failed:", error?.response?.data || error.message);
     res.status(500).json({ error: "Failed to trigger sandbox webhook" });
   }
 };

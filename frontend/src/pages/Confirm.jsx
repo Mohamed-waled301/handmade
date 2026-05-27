@@ -16,10 +16,10 @@ const Confirm = ({ ordNo, expDate, chk, onContinue }) => {
 
       {/* Heading */}
       <h2 className="text-3xl md:text-4xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight mb-3">
-        {t('orderOk')}
+        {t('orderPlaced')}
       </h2>
       <p className="text-sm text-earth-500 dark:text-cream-300 leading-relaxed font-serif max-w-md mx-auto mb-10">
-        {t('orderOkD')}
+        {t('orderPlacedCOD')}
       </p>
 
       {/* Order Info Card */}
@@ -29,7 +29,7 @@ const Confirm = ({ ordNo, expDate, chk, onContinue }) => {
           <span className="text-sm font-mono font-bold text-earth-900 dark:text-cream-100">{ordNo}</span>
         </div>
         <div className="flex justify-between border-b border-warm-200/40 dark:border-earth-700/15 pb-3">
-          <span className="text-xs text-earth-400 font-bold uppercase tracking-wider">{t('totalPaid')}</span>
+          <span className="text-xs text-earth-400 font-bold uppercase tracking-wider">{t('amountDue')}</span>
           <span className="text-sm font-bold text-clay-600 dark:text-gold-400">{fmt(gTotal, lang)}</span>
         </div>
         <div className="flex justify-between border-b border-warm-200/40 dark:border-earth-700/15 pb-3">
@@ -38,8 +38,9 @@ const Confirm = ({ ordNo, expDate, chk, onContinue }) => {
         </div>
         <div className="flex justify-between">
           <span className="text-xs text-earth-400 font-bold uppercase tracking-wider">{t('payVia')}</span>
-          <span className="text-sm font-semibold text-earth-800 dark:text-cream-100 capitalize">
-            {t('pay_' + chk?.pay) || chk?.pay}
+          <span className="text-sm font-semibold text-earth-800 dark:text-cream-100 capitalize flex items-center gap-1.5">
+            <i className="fa-solid fa-money-bill-wave text-emerald-500 text-[10px]"></i>
+            {t('payOnDelivery')}
           </span>
         </div>
       </div>

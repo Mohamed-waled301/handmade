@@ -1,16 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useI18n } from '../hooks/useI18n';
 import { useCart } from '../hooks/useCart';
-import { fetchOrderStatus } from '../services/paymobService';
+import { fetchOrderStatus, cancelOrder, uploadInstaPayReceipt } from '../services/paymobService';
 import { fmt } from '../utils/formatter';
 
 const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => {
   const { t, lang, dir } = useI18n();
   const { gTotal } = useCart();
   
-  const [status, setStatus] = useState('PENDING'); // 'PENDING' | 'PAID' | 'FAILED'
+  const [status, setStatus] = useState('PENDING_PAYMENT'); // 'PENDING_PAYMENT' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED'
   const [transactionDetails, setTransactionDetails] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [intervalRef, setIntervalRef] = useState(null);
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [transactionRef, setTransactionRef] = useState('');
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      await cancelOrder(ordNo);
+      setStatus('CANCELLED');
+      if (intervalRef) {
+        clearInterval(intervalRef);
+        setIntervalRef(null);
+      }
+    } catch (err) {
+      console.error('Cancel error:', err);
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     let intervalId;
@@ -28,6 +48,15 @@ const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => 
           setStatus('FAILED');
           setTransactionDetails(data);
           clearInterval(intervalId);
+        } else if (data.status === 'CANCELLED') {
+          setStatus('CANCELLED');
+          clearInterval(intervalId);
+        } else if (data.status === 'EXPIRED') {
+          setStatus('EXPIRED');
+          clearInterval(intervalId);
+        } else if (data.status === 'PENDING_VERIFICATION') {
+          setStatus('PENDING_VERIFICATION');
+          clearInterval(intervalId);
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -35,7 +64,7 @@ const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => 
 
       // Safeguard: Stop polling after 40 attempts (~100 seconds)
       if (attempts >= 40) {
-        setStatus('FAILED');
+        setStatus('EXPIRED');
         setErrorMsg('Verification timeout. Webhook was not received.');
         clearInterval(intervalId);
       }
@@ -43,6 +72,7 @@ const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => 
 
     // Poll every 2.5 seconds
     intervalId = setInterval(pollStatus, 2500);
+    setIntervalRef(intervalId);
 
     // Initial check immediately
     pollStatus();
@@ -50,27 +80,160 @@ const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => 
     return () => clearInterval(intervalId);
   }, [ordNo]);
 
+  const handleUploadReceipt = async (e) => {
+    e.preventDefault();
+    if (!receiptFile || !transactionRef) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('receipt', receiptFile);
+      formData.append('transactionReference', transactionRef);
+      await uploadInstaPayReceipt(ordNo, formData);
+      setStatus('PENDING_VERIFICATION');
+      if (intervalRef) {
+        clearInterval(intervalRef);
+        setIntervalRef(null);
+      }
+    } catch (err) {
+      console.error('Upload Error:', err);
+      // For demo purposes if there is an error, we can just show it.
+      // But we will use alert for simplicity.
+      alert(err.message || 'Failed to upload receipt');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <main className="flex-1 py-12 px-6 md:py-24 max-w-2xl mx-auto text-center font-sans" dir={dir}>
       
-      {/* ─── POLLING / PENDING VIEW ─── */}
-      {status === 'PENDING' && (
+      {/* ─── POLLING / PENDING_PAYMENT VIEW ─── */}
+      {status === 'PENDING_PAYMENT' && (
         <div className="space-y-8 animate-fade-in">
-          <div className="w-20 h-20 rounded-full bg-clay-500/10 dark:bg-gold-500/10 text-clay-600 dark:text-gold-400 flex items-center justify-center mx-auto shadow-md animate-spin-slow">
-            <i className="fa-solid fa-arrows-spin text-4xl"></i>
+          
+          {chk?.pay === 'instapay' ? (
+            <div className="bg-white dark:bg-earth-800 border border-warm-200 dark:border-earth-700 rounded-3xl p-8 shadow-xl text-left">
+              <h2 className="text-2xl font-serif font-black text-earth-900 dark:text-cream-50 mb-2">
+                {t('payIPA')} Transfer
+              </h2>
+              <p className="text-sm text-earth-500 dark:text-cream-300 mb-6">
+                Please transfer the total amount to our InstaPay address <strong className="font-mono bg-warm-100 dark:bg-earth-900 px-2 py-1 rounded">handmade_store@instapay</strong> and upload your receipt below.
+              </p>
+              
+              <div className="flex justify-between items-center mb-6 bg-cream-50 dark:bg-earth-900/50 p-4 rounded-xl border border-warm-200 dark:border-earth-700/50">
+                <span className="text-xs font-bold uppercase tracking-wider text-earth-500 dark:text-cream-400">Amount Due</span>
+                <span className="text-lg font-bold text-clay-600 dark:text-gold-400">{fmt(gTotal, lang)}</span>
+              </div>
+
+              <form onSubmit={handleUploadReceipt} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-earth-600 dark:text-cream-200 mb-2">Transaction Reference No.</label>
+                  <input 
+                    type="text" 
+                    value={transactionRef}
+                    onChange={(e) => setTransactionRef(e.target.value)}
+                    required
+                    placeholder="e.g. 1234567890"
+                    className="w-full bg-cream-50 dark:bg-earth-900 border border-warm-200 dark:border-earth-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-clay-400 dark:focus:border-gold-500 transition-colors"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-earth-600 dark:text-cream-200 mb-2">Upload Screenshot (Receipt)</label>
+                  <label className="upload-zone flex flex-col items-center justify-center w-full h-32 rounded-xl cursor-pointer bg-cream-50 dark:bg-earth-900">
+                    <i className="fa-solid fa-cloud-arrow-up text-3xl text-clay-400 dark:text-gold-500 mb-2"></i>
+                    <span className="text-sm text-earth-500 dark:text-cream-400 font-medium">
+                      {receiptFile ? receiptFile.name : 'Click to select image (PNG, JPG)'}
+                    </span>
+                    <input 
+                      type="file" 
+                      accept="image/png, image/jpeg" 
+                      className="hidden" 
+                      onChange={(e) => setReceiptFile(e.target.files[0])}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={uploading || !receiptFile || !transactionRef}
+                    className="flex-1 py-3.5 bg-earth-900 dark:bg-cream-100 text-cream-50 dark:text-earth-900 font-semibold rounded-xl hover:shadow-lg transition-all text-sm disabled:opacity-50"
+                  >
+                    {uploading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : 'Submit Receipt'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="px-6 py-3.5 border border-warm-300 dark:border-earth-700 text-earth-800 dark:text-cream-200 font-semibold rounded-xl hover:bg-warm-50 dark:hover:bg-earth-800 transition-colors text-sm"
+                  >
+                    {cancelling ? <i className="fa-solid fa-circle-notch animate-spin"></i> : t('cancelPayment')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <>
+              <div className="w-20 h-20 rounded-full bg-clay-500/10 dark:bg-gold-500/10 text-clay-600 dark:text-gold-400 flex items-center justify-center mx-auto shadow-md animate-spin-slow">
+                <i className="fa-solid fa-arrows-spin text-4xl"></i>
+              </div>
+              <div className="space-y-3">
+                <h2 className="text-2xl md:text-3xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight">
+                  {t('payStatusDesc')}
+                </h2>
+                <p className="text-sm text-earth-400 dark:text-cream-500 leading-relaxed font-serif max-w-sm mx-auto">
+                  {t('verifyingPayment')}
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-clay-600 dark:text-gold-400">
+                <i className="fa-solid fa-circle-notch animate-spin text-[10px]"></i>
+                <span>{t('statusPending')}</span>
+              </div>
+              <div className="pt-2">
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="px-6 py-2.5 border border-warm-300 dark:border-earth-700 text-earth-600 dark:text-cream-300 font-semibold rounded-xl hover:border-red-400 hover:text-red-500 dark:hover:border-red-500 dark:hover:text-red-400 transition-colors text-xs disabled:opacity-50"
+                >
+                  {cancelling ? (
+                    <span className="inline-flex items-center gap-2">
+                      <i className="fa-solid fa-circle-notch animate-spin text-[10px]"></i>
+                      {t('cancelling')}
+                    </span>
+                  ) : (
+                    t('cancelPayment')
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ─── PENDING_VERIFICATION VIEW ─── */}
+      {status === 'PENDING_VERIFICATION' && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="w-20 h-20 rounded-full bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-sky-500/10">
+            <i className="fa-solid fa-file-invoice text-4xl"></i>
           </div>
+
           <div className="space-y-3">
-            <h2 className="text-2xl md:text-3xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight">
-              {t('payStatusDesc')}
+            <h2 className="text-3xl md:text-4xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight">
+              Receipt Under Review
             </h2>
-            <p className="text-sm text-earth-400 dark:text-cream-500 leading-relaxed font-serif max-w-sm mx-auto">
-              {t('verifyingPayment')}
+            <p className="text-sm text-earth-500 dark:text-cream-300 leading-relaxed font-serif max-w-md mx-auto">
+              We have successfully received your transfer receipt. Our team will verify the payment shortly and update your order status.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-clay-600 dark:text-gold-400">
-            <i className="fa-solid fa-circle-notch animate-spin text-[10px]"></i>
-            <span>{t('statusPending')}</span>
-          </div>
+
+          <button
+            onClick={onContinue}
+            className="px-8 py-3.5 border border-warm-300 dark:border-earth-700 text-earth-800 dark:text-cream-200 font-semibold rounded-xl hover:border-clay-400 dark:hover:border-gold-500 transition-colors text-sm bg-white/40 dark:bg-earth-800/20"
+          >
+            {t('contShop')}
+          </button>
         </div>
       )}
 
@@ -142,6 +305,72 @@ const PaymentStatus = ({ ordNo, expDate, chk, onContinue, onRetryCheckout }) => 
             </h2>
             <p className="text-sm text-earth-500 dark:text-cream-300 leading-relaxed font-serif max-w-md mx-auto">
               {errorMsg || t('payFailedDesc')}
+            </p>
+          </div>
+
+          <div className="flex gap-4 justify-center pt-4">
+            <button
+              onClick={onRetryCheckout}
+              className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 text-sm"
+            >
+              {t('retryPayment')}
+            </button>
+            <button
+              onClick={onContinue}
+              className="px-8 py-3.5 border border-warm-300 dark:border-earth-700 text-earth-800 dark:text-cream-200 font-semibold rounded-xl hover:border-clay-400 dark:hover:border-gold-500 transition-colors text-sm bg-white/40 dark:bg-earth-800/20"
+            >
+              {t('retHome')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── CANCELLED VIEW ─── */}
+      {status === 'CANCELLED' && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10">
+            <i className="fa-solid fa-ban text-4xl"></i>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl md:text-4xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight">
+              {t('statusCancelled')}
+            </h2>
+            <p className="text-sm text-earth-500 dark:text-cream-300 leading-relaxed font-serif max-w-md mx-auto">
+              {t('cancelledDesc')}
+            </p>
+          </div>
+
+          <div className="flex gap-4 justify-center pt-4">
+            <button
+              onClick={onRetryCheckout}
+              className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 text-sm"
+            >
+              {t('retryPayment')}
+            </button>
+            <button
+              onClick={onContinue}
+              className="px-8 py-3.5 border border-warm-300 dark:border-earth-700 text-earth-800 dark:text-cream-200 font-semibold rounded-xl hover:border-clay-400 dark:hover:border-gold-500 transition-colors text-sm bg-white/40 dark:bg-earth-800/20"
+            >
+              {t('retHome')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── EXPIRED VIEW ─── */}
+      {status === 'EXPIRED' && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="w-20 h-20 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto shadow-lg shadow-orange-500/10">
+            <i className="fa-solid fa-clock text-4xl"></i>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl md:text-4xl font-serif font-black tracking-tight text-earth-900 dark:text-cream-50 leading-tight">
+              {t('statusExpired')}
+            </h2>
+            <p className="text-sm text-earth-500 dark:text-cream-300 leading-relaxed font-serif max-w-md mx-auto">
+              {errorMsg || t('expiredDesc')}
             </p>
           </div>
 

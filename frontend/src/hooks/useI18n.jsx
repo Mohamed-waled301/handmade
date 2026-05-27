@@ -102,7 +102,23 @@ const S = {
     retryPayment: 'Try Again',
     txId: 'Transaction ID',
     statusPending: 'Awaiting Webhook...',
-    retHome: 'Return to Home'
+    retHome: 'Return to Home',
+    orderPlaced: 'Order Placed!',
+    orderPlacedCOD: 'Your order has been confirmed. Payment will be collected upon delivery.',
+    payOnDelivery: 'Cash on Delivery',
+    amountDue: 'Amount Due',
+    cancelPayment: 'Cancel Payment',
+    cancelling: 'Cancelling...',
+    statusCancelled: 'Payment Cancelled',
+    cancelledDesc: 'Your payment has been cancelled. Your order has not been processed.',
+    statusExpired: 'Payment Session Expired',
+    expiredDesc: 'Your payment session has timed out. Please try again to complete your purchase.',
+    serverError: 'Unable to connect to server. Please try again.',
+    placeOrder: 'Place Order',
+    uploadReceipt: 'Upload Screenshot (Receipt)',
+    receiptReview: 'Receipt Under Review',
+    receiptReviewDesc: 'We have successfully received your transfer receipt. Our team will verify the payment shortly and update your order status.',
+    submitReceipt: 'Submit Receipt'
   },
   ar: {
     loading: 'هاندميد',
@@ -205,7 +221,23 @@ const S = {
     retryPayment: 'إعادة المحاولة',
     txId: 'رقم المعاملة',
     statusPending: 'في انتظار تأكيد البوابة...',
-    retHome: 'العودة للرئيسية'
+    retHome: 'العودة للرئيسية',
+    orderPlaced: 'تم تأكيد الطلب!',
+    orderPlacedCOD: 'تم تأكيد طلبك بنجاح. سيتم تحصيل المبلغ عند الاستلام.',
+    payOnDelivery: 'الدفع عند الاستلام',
+    amountDue: 'المبلغ المطلوب',
+    cancelPayment: 'إلغاء الدفع',
+    cancelling: 'جاري الإلغاء...',
+    statusCancelled: 'تم إلغاء الدفع',
+    cancelledDesc: 'تم إلغاء عملية الدفع. لم يتم معالجة طلبك.',
+    statusExpired: 'انتهت جلسة الدفع',
+    expiredDesc: 'انتهت مهلة الدفع. يرجى المحاولة مرة أخرى لإتمام عملية الشراء.',
+    serverError: 'تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى.',
+    placeOrder: 'تأكيد الطلب',
+    uploadReceipt: 'رفع صورة الإيصال',
+    receiptReview: 'قيد المراجعة',
+    receiptReviewDesc: 'تم استلام إيصال التحويل بنجاح. سيقوم فريقنا بمراجعته قريباً وتحديث حالة طلبك.',
+    submitReceipt: 'تأكيد الإيصال'
   }
 };
 
