@@ -27,7 +27,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? [process.env.FRONTEND_URL || 'https://yourdomain.com']
-    : ['http://localhost:5173', 'http://localhost:5000', 'http://localhost:3000'],
+    : (origin, callback) => {
+        // In development, dynamically allow any request origin (e.g., localhost, 127.0.0.1, tunnel URLs, local network IPs)
+        callback(null, true);
+      },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-app-client'],
   credentials: true
